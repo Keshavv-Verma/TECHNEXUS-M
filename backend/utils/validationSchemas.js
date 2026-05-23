@@ -60,11 +60,11 @@ const placeOrderSchema = Joi.object({
   addressId: Joi.string().required(),
   couponCode: Joi.string().allow('', null).optional(),
   paymentMethod: Joi.string()
-    .valid('COD', 'CREDIT_CARD', 'DEBIT_CARD', 'UPI', 'NET_BANKING', 'RAZORPAY')
+    .valid('COD', 'CREDIT_CARD', 'DEBIT_CARD', 'UPI', 'NET_BANKING', 'STRIPE')
     .required(),
   paymentStatus: Joi.string().valid('PENDING', 'COMPLETED').default('PENDING'),
-  razorpayOrderId: Joi.string().allow('', null).optional(),
-  razorpayPaymentId: Joi.string().allow('', null).optional(),
+  stripeSessionId: Joi.string().allow('', null).optional(),
+  stripePaymentIntentId: Joi.string().allow('', null).optional(),
 });
 
 module.exports = {

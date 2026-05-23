@@ -16,7 +16,9 @@ import AuthForm from './components/Login/AuthForm';
 import Dashboard from './components/Dashboard/Dashboard';
 import CartPage from './pages/Cart';
 import OrderSuccess from './pages/OrderSuccess';
+import Orders from './pages/Orders';
 import TrackOrder from './pages/TrackOrder';
+import AIAssistant from './components/AIAssistant/AIAssistant';
 
 function App() {
   useEffect(() => {
@@ -54,12 +56,14 @@ function App() {
             <Route path="/product/:id" element={<SingleProduct />} />
             <Route path='/success' element={<SuccessPage/>} />
             <Route path='/order-success' element={<OrderSuccess />} />
+            <Route path='/orders' element={<Orders />} />
             <Route path='/track-order/:orderNumber' element={<TrackOrder />} />
             <Route path='/productpage/:id' element={<ProductPage/>} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/cart" element={<CartPage />} />
           </Routes>
           <Footer />
+          <AIAssistant />
         </AppContext>
       </BrowserRouter>
     </div>

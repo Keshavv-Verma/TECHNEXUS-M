@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { BsCartX } from 'react-icons/bs';
 import { MdClose } from 'react-icons/md';
@@ -19,7 +19,13 @@ import {
   setDefaultAddress,
   placeOrder,
 } from '../../services/checkoutService';
-import { createOrder, initiateRazorpayPayment, verifyPaymentSignature } from '../../services/paymentService';
+import {
+  initiateStripePayment,
+  verifyStripeCheckout,
+  savePendingCheckout,
+  loadPendingCheckout,
+  clearPendingCheckout,
+} from '../../services/paymentService';
 import {
   isLoggedIn,
   clearAuth,
@@ -47,6 +53,7 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState(null);
   const [sessionExpired, setSessionExpired] = useState(false);
+  const stripeReturnHandled = useRef(false);
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -98,6 +105,79 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   useEffect(() => {
     getCheckoutConfig().then(setConfig).catch(() => {});
   }, []);
+
+  const completeStripeReturn = useCallback(
+    async (sessionId) => {
+      const pending = loadPendingCheckout();
+      if (!pending) {
+        showToast('Checkout session expired. Please try again.', 'error');
+        return;
+      }
+
+      setProcessing(true);
+      try {
+        const verification = await verifyStripeCheckout(sessionId);
+        if (verification.verified && !verification.duplicate) {
+          const order = await placeOrder({
+            ...pending.orderPayload,
+            paymentMethod: 'STRIPE',
+            paymentStatus: 'COMPLETED',
+            stripeSessionId: verification.sessionId,
+            stripePaymentIntentId: verification.paymentIntentId,
+          });
+          clearPendingCheckout();
+          saveCart([]);
+          setCartItems([]);
+          navigate('/order-success', {
+            state: {
+              orderId: order._id,
+              orderNumber: order.orderNumber,
+              totalAmount: order.totalAmount,
+              deliveryAddress: order.deliveryAddress,
+              estimatedDeliveryEarliest: order.estimatedDeliveryEarliest,
+              estimatedDeliveryLatest: order.estimatedDeliveryLatest,
+              createdAt: order.createdAt,
+            },
+          });
+          if (setShowCart) setShowCart(false);
+        } else if (verification.duplicate) {
+          clearPendingCheckout();
+          showToast('Payment already processed', 'success');
+          navigate('/order-success', {
+            state: { orderId: verification.existingOrderId },
+          });
+        } else {
+          showToast('Payment verification failed', 'error');
+        }
+      } catch (err) {
+        if (!handleAuthFailure(err)) {
+          showToast(err.message || 'Payment processing failed', 'error');
+        }
+      } finally {
+        setProcessing(false);
+        window.history.replaceState({}, '', '/cart');
+      }
+    },
+    [navigate, setShowCart, handleAuthFailure]
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const stripeCheckout = params.get('stripe_checkout');
+    const sessionId = params.get('session_id');
+
+    if (stripeCheckout === 'cancelled') {
+      clearPendingCheckout();
+      showToast('Payment was cancelled', 'error');
+      window.history.replaceState({}, '', '/cart');
+      return;
+    }
+
+    if (stripeCheckout === 'success' && sessionId && isLoggedIn() && !stripeReturnHandled.current) {
+      stripeReturnHandled.current = true;
+      completeStripeReturn(sessionId);
+    }
+  }, [completeStripeReturn]);
 
   useEffect(() => {
     if (isLoggedIn() && cartItems.length) refreshPricing();
@@ -201,8 +281,8 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
     couponCode: appliedCoupon?.code || '',
     paymentMethod: extra.paymentMethod || paymentMethod,
     paymentStatus: extra.paymentStatus || 'PENDING',
-    razorpayOrderId: extra.razorpayOrderId || null,
-    razorpayPaymentId: extra.razorpayPaymentId || null,
+    stripeSessionId: extra.stripeSessionId || null,
+    stripePaymentIntentId: extra.stripePaymentIntentId || null,
   });
 
   const finalizeOrder = async (extra) => {
@@ -231,81 +311,48 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
 
     setProcessing(true);
     try {
-      const total = displayPricing?.totalAmount || 0;
+      const total = Number(displayPricing?.totalAmount) || 0;
 
       if (paymentMethod === 'COD') {
         await finalizeOrder({ paymentMethod: 'COD', paymentStatus: 'PENDING' });
         return;
       }
 
-      const needsCard = paymentMethod === 'CREDIT_CARD' || paymentMethod === 'DEBIT_CARD';
-      if (needsCard) {
-        // Card validation will be handled by Razorpay checkout
-        // No need for pre-validation as Razorpay handles it
-      }
+      const stripeMethod =
+        paymentMethod === 'CREDIT_CARD' ||
+        paymentMethod === 'DEBIT_CARD' ||
+        paymentMethod === 'UPI' ||
+        paymentMethod === 'NET_BANKING';
 
-      const razorpayMethod =
-        needsCard || paymentMethod === 'UPI' || paymentMethod === 'NET_BANKING';
+      if (stripeMethod) {
+        if (total < 50) {
+          showToast('Order total must be at least ₹50 for online payment (Stripe minimum)', 'error');
+          setProcessing(false);
+          return;
+        }
 
-      if (razorpayMethod) {
+        const addr = addresses.find((a) => a._id === selectedAddressId);
+        if (!addr?.mobile) {
+          showToast('Delivery address must include a valid mobile number', 'error');
+          setProcessing(false);
+          return;
+        }
+
         try {
-          const orderRes = await createOrder(total);
-          if (!orderRes.success) throw new Error('Failed to create payment order');
-
           const userEmail = localStorage.getItem('currentUser')
             ? JSON.parse(localStorage.getItem('currentUser') || '{}')?.username
-            : 'customer@example.com';
+            : '';
 
-          await initiateRazorpayPayment(
-            {
-              amount: total,
-              orderId: orderRes.orderId,
-              keyId: orderRes.keyId,
-              customerEmail: userEmail || 'customer@example.com',
-              customerName: 'Customer',
-              customerPhone: '9999999999',
-              productNames: cartItems.map((i) => i.name).join(', '),
-            },
-            async (paymentResponse) => {
-              console.log('CheckoutFlow onSuccess callback called with:', paymentResponse);
-              try {
-                const verification = await verifyPaymentSignature(paymentResponse);
-                console.log('CheckoutFlow verification result:', verification);
-                if (verification.verified && !verification.duplicate) {
-                  console.log('Creating order with payment details');
-                  await finalizeOrder({
-                    paymentMethod: 'RAZORPAY',
-                    paymentStatus: 'COMPLETED',
-                    razorpayOrderId: verification.orderId,
-                    razorpayPaymentId: verification.paymentId,
-                  });
-                  console.log('Order created successfully');
-                } else if (verification.duplicate) {
-                  console.log('Duplicate payment detected, redirecting to existing order');
-                  showToast('Payment already processed', 'success');
-                  navigate('/order-success', {
-                    state: {
-                      orderId: verification.existingOrderId,
-                    },
-                  });
-                } else {
-                  console.error('Payment verification failed');
-                  showToast('Payment verification failed', 'error');
-                }
-                setProcessing(false);
-              } catch (error) {
-                console.error('CheckoutFlow payment processing error:', error);
-                showToast(error.message || 'Payment processing failed', 'error');
-                setProcessing(false);
-              }
-            },
-            (error) => {
-              console.error('CheckoutFlow payment error callback:', error);
-              showToast(error || 'Payment failed or cancelled', 'error');
-              setProcessing(false);
-            }
-          );
+          savePendingCheckout({
+            orderPayload: placeOrderPayload({ paymentMethod, paymentStatus: 'PENDING' }),
+          });
+
+          await initiateStripePayment({
+            amount: total,
+            customerEmail: userEmail,
+          });
         } catch (error) {
+          clearPendingCheckout();
           showToast(error.message || 'Failed to initiate payment', 'error');
           setProcessing(false);
         }

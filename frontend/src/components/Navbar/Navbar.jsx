@@ -35,6 +35,7 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [color, setColor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
     const updateCartCount = () => {
@@ -49,7 +50,9 @@ const Navbar = () => {
         clearAuth();
       }
       const isAdminUser = localStorage.getItem('isAdmin');
-      setIsAdmin(isLoggedIn() && isAdminUser === 'true');
+      const authed = isLoggedIn();
+      setLoggedIn(authed);
+      setIsAdmin(authed && isAdminUser === 'true');
     };
 
     updateCartCount();
@@ -92,6 +95,7 @@ const Navbar = () => {
     if (isLoggedIn()) {
       clearAuth();
       setIsAdmin(false);
+      setLoggedIn(false);
       window.location.reload(); // Force reload to update navbar
     } else {
       if (getToken()) clearAuth();
@@ -130,6 +134,19 @@ const Navbar = () => {
             <span className="sign-in-icon" onClick={handleSignIn}>
               {isLoggedIn() ? <span>Logout</span> : <FiUser />}
             </span>
+            {loggedIn && (
+              <Link
+                to="/orders"
+                style={{
+                  color: 'inherit',
+                  textDecoration: 'none',
+                  fontSize: 14,
+                  marginRight: 8,
+                }}
+              >
+                Orders
+              </Link>
+            )}
             <span
               onClick={() => navigate('/cart')}
               className="cart-icon"

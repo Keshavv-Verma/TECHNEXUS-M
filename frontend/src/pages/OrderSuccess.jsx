@@ -67,6 +67,9 @@ const OrderSuccess = () => {
         </div>
 
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap', marginTop: 24 }}>
+          <button type="button" className="get-home" onClick={() => navigate('/orders')}>
+            View My Orders
+          </button>
           <button type="button" className="get-home" onClick={() => navigate('/')}>
             Continue Shopping
           </button>

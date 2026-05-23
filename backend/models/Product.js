@@ -1,5 +1,13 @@
 const mongoose = require('mongoose');
 
+function addCategoryAlias(ret) {
+  const cat = ret.categoryId;
+  if (cat && typeof cat === 'object' && cat.name != null) {
+    ret.category = cat;
+  }
+  return ret;
+}
+
 const productSchema = new mongoose.Schema(
   {
     _id: {
@@ -62,8 +70,18 @@ const productSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toJSON: {
+      virtuals: true,
+      transform(_doc, ret) {
+        return addCategoryAlias(ret);
+      },
+    },
+    toObject: {
+      virtuals: true,
+      transform(_doc, ret) {
+        return addCategoryAlias(ret);
+      },
+    },
   }
 );
 

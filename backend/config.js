@@ -59,11 +59,10 @@ const config = {
     allowedHeaders: ['Content-Type', 'Authorization'],
   },
 
-  // Payment Gateways
-  razorpay: {
-    keyId: process.env.RAZORPAY_KEY_ID,
-    keySecret: process.env.RAZORPAY_KEY_SECRET,
-  },
+  // Frontend (Stripe redirect URLs)
+  frontendUrl: (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/$/, ''),
+
+  // Payment
   stripe: {
     secretKey: process.env.STRIPE_SECRET_KEY,
   },
@@ -95,8 +94,6 @@ if (config.isProduction) {
   const requiredEnvVars = [
     'DATABASE_URL',
     'JWT_SECRET',
-    'RAZORPAY_KEY_ID',
-    'RAZORPAY_KEY_SECRET',
     'STRIPE_SECRET_KEY',
     'CORS_ORIGIN',
   ];

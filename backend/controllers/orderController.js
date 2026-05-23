@@ -57,9 +57,9 @@ const placeOrder = async (req, res, next) => {
     const isCod = value.paymentMethod === 'COD';
     const paymentCompleted =
       value.paymentStatus === 'COMPLETED' ||
-      (value.paymentMethod === 'RAZORPAY' && value.razorpayPaymentId);
+      (value.paymentMethod === 'STRIPE' && value.stripePaymentIntentId);
 
-    if (!isCod && !paymentCompleted && value.paymentMethod !== 'RAZORPAY') {
+    if (!isCod && !paymentCompleted && value.paymentMethod !== 'STRIPE') {
       await session.abortTransaction();
       return res.status(400).json({ error: 'Payment must be completed before placing order' });
     }
@@ -109,8 +109,8 @@ const placeOrder = async (req, res, next) => {
           deliveryAddress: deliverySnapshot,
           paymentMethod: value.paymentMethod,
           paymentStatus: isCod ? 'PENDING' : paymentCompleted ? 'COMPLETED' : 'PENDING',
-          razorpayOrderId: value.razorpayOrderId || null,
-          razorpayPaymentId: value.razorpayPaymentId || null,
+          stripeSessionId: value.stripeSessionId || null,
+          stripePaymentIntentId: value.stripePaymentIntentId || null,
           estimatedDeliveryEarliest: pricing.estimatedDelivery.earliest,
           estimatedDeliveryLatest: pricing.estimatedDelivery.latest,
           orderItems: items.map((i) => ({
@@ -140,8 +140,34 @@ const placeOrder = async (req, res, next) => {
 const getMyOrders = async (req, res) => {
   const orders = await Order.find({ userId: req.user.userId })
     .sort({ createdAt: -1 })
-    .select('-__v');
+    .select('-__v')
+    .lean();
   res.json(orders);
+};
+
+const getAdminOrders = async (req, res) => {
+  const orders = await Order.find({})
+    .sort({ createdAt: -1 })
+    .populate('userId', 'name email')
+    .select('-__v')
+    .lean();
+  res.json(orders);
+};
+
+const markOrderReceived = async (req, res, next) => {
+  try {
+    const order = await Order.findOne({
+      _id: req.params.id,
+      userId: req.user.userId,
+    });
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    await Order.deleteOne({ _id: order._id });
+    res.json({ success: true, message: 'Order marked as received and removed' });
+  } catch (err) {
+    next(err);
+  }
 };
 
 const getOrderById = async (req, res) => {
@@ -165,6 +191,8 @@ const getOrderByNumber = async (req, res) => {
 module.exports = {
   placeOrder,
   getMyOrders,
+  getAdminOrders,
+  markOrderReceived,
   getOrderById,
   getOrderByNumber,
 };

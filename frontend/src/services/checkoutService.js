@@ -38,7 +38,10 @@ const handleResponse = async (res) => {
           : data.error || 'Resource not found'
       );
     }
-    throw new Error(data.error || `Request failed (${res.status})`);
+    const err = new Error(data.error || `Request failed (${res.status})`);
+    if (data.detail) err.detail = data.detail;
+    if (data.verified === false) err.verified = false;
+    throw err;
   }
 
   return data;
@@ -122,21 +125,25 @@ export const getOrderByNumber = (orderNumber) =>
 export const getMyOrders = () =>
   fetch(buildUrl('/api/orders'), { headers: authHeaders() }).then((r) => handleResponse(r));
 
-export const createRazorpayOrder = (amount) =>
-  fetch(buildUrl('/api/payments/razorpay/create-order'), {
-    method: 'POST',
+export const getAdminOrders = () =>
+  fetch(buildUrl('/api/admin/orders'), { headers: authHeaders() }).then((r) => handleResponse(r));
+
+export const markOrderReceived = (orderId) =>
+  fetch(buildUrl('/api/orders/' + orderId + '/received'), {
+    method: 'PATCH',
     headers: authHeaders(),
-    body: JSON.stringify({ amount }),
   }).then((r) => handleResponse(r));
 
-export const verifyRazorpayPayment = (paymentData) =>
-  fetch(buildUrl('/api/payments/razorpay/verify'), {
+export const createStripeCheckoutSession = (amount, { customerEmail, successUrl, cancelUrl } = {}) =>
+  fetch(buildUrl('/api/payments/stripe/create-checkout-session'), {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify(paymentData),
+    body: JSON.stringify({ amount, customerEmail, successUrl, cancelUrl }),
   }).then((r) => handleResponse(r));
 
-export const checkPaymentStatus = (orderId) =>
-  fetch(buildUrl(`/api/payments/razorpay/status/${orderId}`), {
+export const verifyStripeSession = (sessionId) =>
+  fetch(buildUrl('/api/payments/stripe/verify-session'), {
+    method: 'POST',
     headers: authHeaders(),
+    body: JSON.stringify({ sessionId }),
   }).then((r) => handleResponse(r));

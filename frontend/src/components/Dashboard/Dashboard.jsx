@@ -1,9 +1,16 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getAdminOrders } from '../../services/checkoutService';
 import './Dashboard.css';
 
+const formatOrderDate = (d) =>
+  d ? new Date(d).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+
 const Dashboard = () => {
+  const [activeTab, setActiveTab] = useState('products');
   const [products, setProducts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -17,6 +24,19 @@ const Dashboard = () => {
     description: ''
   });
   const navigate = useNavigate();
+
+  const fetchOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      const data = await getAdminOrders();
+      setOrders(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error loading orders:', error);
+      setError(error.message || 'Failed to load orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
 
   const fetchProducts = useCallback(async () => {
     try {
@@ -45,7 +65,14 @@ const Dashboard = () => {
     }
 
     fetchProducts();
-  }, [fetchProducts, navigate]);
+    fetchOrders();
+  }, [fetchProducts, fetchOrders, navigate]);
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchOrders();
+    }
+  }, [activeTab, fetchOrders]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -110,7 +137,7 @@ const Dashboard = () => {
     setEditData({
       id: product._id,
       name: product.name,
-      category: product.category?.name || '',
+      category: product.category?.name || product.categoryId?.name || '',
       price: product.price,
       rating: product.rating,
       image: product.image,
@@ -221,8 +248,26 @@ const Dashboard = () => {
   return (
     <div className="admin-dashboard-wrapper dark">
       <div className="admin-dashboard-header">
-        <h1>Product Management Console</h1>
-        <p className="admin-dashboard-subtitle">Add and manage your products</p>
+        <h1>Admin Console</h1>
+        <p className="admin-dashboard-subtitle">Manage products and customer orders</p>
+        <div className="admin-tabs" style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+          <button
+            type="button"
+            className={activeTab === 'products' ? 'admin-submit-btn' : 'btn-secondary'}
+            style={{ width: 'auto', padding: '8px 20px' }}
+            onClick={() => setActiveTab('products')}
+          >
+            Products
+          </button>
+          <button
+            type="button"
+            className={activeTab === 'orders' ? 'admin-submit-btn' : 'btn-secondary'}
+            style={{ width: 'auto', padding: '8px 20px' }}
+            onClick={() => setActiveTab('orders')}
+          >
+            Orders ({orders.length})
+          </button>
+        </div>
       </div>
       
       {error && (
@@ -252,6 +297,69 @@ const Dashboard = () => {
       )}
       
       <div className="admin-dashboard-content">
+        {activeTab === 'orders' && (
+          <div className="admin-products-overview" style={{ gridColumn: '1 / -1', width: '100%' }}>
+            <div className="admin-overview-header">
+              <h2>ACTIVE ORDERS</h2>
+              <span className="admin-product-count">{orders.length} pending delivery</span>
+            </div>
+            {ordersLoading ? (
+              <p style={{ color: '#888' }}>Loading orders…</p>
+            ) : orders.length === 0 ? (
+              <p style={{ color: '#888' }}>No active orders. Orders appear here after customers pay and disappear when they mark Received.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {orders.map((order) => (
+                  <div
+                    key={order._id}
+                    style={{
+                      background: '#fff',
+                      borderRadius: 8,
+                      padding: 20,
+                      border: '1px solid #e0e0e0',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                      <div>
+                        <h3 style={{ margin: 0, color: '#1a1a1a' }}>{order.orderNumber}</h3>
+                        <p style={{ margin: '4px 0', color: '#666', fontSize: 14 }}>
+                          {formatOrderDate(order.createdAt)}
+                        </p>
+                      </div>
+                      <span style={{ fontSize: 13, color: '#4CAF50', fontWeight: 600 }}>{order.status}</span>
+                    </div>
+                    <p style={{ margin: '4px 0', fontSize: 14, color: '#333' }}>
+                      <strong>Customer:</strong>{' '}
+                      {order.userId?.name || '—'} ({order.userId?.email || '—'})
+                    </p>
+                    <p style={{ margin: '4px 0', fontSize: 14, color: '#333' }}>
+                      <strong>Total:</strong> ₹{order.totalAmount?.toLocaleString('en-IN')} ·{' '}
+                      <strong>Payment:</strong> {order.paymentMethod} ({order.paymentStatus})
+                    </p>
+                    {order.deliveryAddress && (
+                      <p style={{ margin: '8px 0', fontSize: 14, color: '#555' }}>
+                        <strong>Ship to:</strong> {order.deliveryAddress.fullName},{' '}
+                        {order.deliveryAddress.houseNo}, {order.deliveryAddress.street},{' '}
+                        {order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.pincode}
+                      </p>
+                    )}
+                    <ul style={{ margin: '12px 0 0', paddingLeft: 20, fontSize: 14, color: '#444' }}>
+                      {(order.orderItems || []).map((item, i) => (
+                        <li key={i}>
+                          {item.name} × {item.quantity} — ₹{(item.price * item.quantity).toLocaleString('en-IN')}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'products' && (
+        <>
         <div className="admin-product-form-container">
           <div className="admin-form-header">
             <h2>Add New Product</h2>
@@ -510,7 +618,7 @@ const Dashboard = () => {
                     <>
                       <div className="admin-product-image-container">
                         <img src={product.image || 'https://via.placeholder.com/200'} alt={product.name} className="admin-product-image" />
-                        <span className="admin-product-category">{product.category?.name || 'Unknown'}</span>
+                        <span className="admin-product-category">{product.category?.name || product.categoryId?.name || 'Unknown'}</span>
                       </div>
                       <div className="admin-product-details">
                         <h3 className="admin-product-name">{product.name}</h3>
@@ -560,6 +668,8 @@ const Dashboard = () => {
             )}
           </div>
         </div>
+        </>
+        )}
       </div>
     </div>
   );

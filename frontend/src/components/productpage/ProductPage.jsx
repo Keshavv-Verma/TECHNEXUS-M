@@ -103,7 +103,7 @@ const ProductPage = () => {
                 ))}
                 <span className="rating-count">({product.rating} / 5)</span>
               </div>
-              <span className="product-category">{product.category?.name || 'Uncategorized'}</span>
+              <span className="product-category">{product.category?.name || product.categoryId?.name || 'Uncategorized'}</span>
             </div>
           </div>
 

@@ -3,8 +3,16 @@ const router = express.Router();
 const { verifyToken } = require('../middlewares/authMiddleware');
 const paymentController = require('../controllers/paymentController');
 
-router.post('/payments/razorpay/create-order', verifyToken, paymentController.createRazorpayOrder);
-router.post('/payments/razorpay/verify', verifyToken, paymentController.verifyRazorpayPayment);
-router.get('/payments/razorpay/status/:orderId', verifyToken, paymentController.checkPaymentStatus);
+router.post(
+  '/payments/stripe/create-checkout-session',
+  verifyToken,
+  paymentController.createCheckoutSession
+);
+router.post('/payments/stripe/verify-session', verifyToken, paymentController.verifyCheckoutSession);
+router.get(
+  '/payments/stripe/verify-session/:sessionId',
+  verifyToken,
+  paymentController.verifyCheckoutSession
+);
 
 module.exports = router;
