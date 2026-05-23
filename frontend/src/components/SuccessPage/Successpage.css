@@ -1,0 +1,58 @@
+.successpage-container{
+    width: 100%;
+    height: 100vh;
+    background-color:  #07090f;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 60px;
+}
+.success-content{
+    border-radius: 25px;
+   background-color: rgba(255, 255, 255, 0.075);
+    width: 60%;
+    height: 80%;
+    padding: 5%;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+    gap: 60px;
+
+}
+.success-icon{
+    margin: 0 auto;
+    height: 200px;
+    width: 200px;
+    padding: 50px;
+    background-color: white;
+    color: rgb(37, 141, 37);
+    font-size: 3rem;
+    border-radius: 50%;
+    
+}
+.success-icon svg{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    width: 100%;
+}
+.get-home{
+    outline: none;
+    background-color:  rgb(194, 194, 194);
+    padding: 10px 30px;
+    font-size: 1.1rem;
+    transition: .2s;
+}
+.get-home:hover{
+    background-color: white;
+}
+.success-content h1{
+    color: rgb(37, 141, 37);
+}
+@media screen and (max-width:1104px){
+    .success-content{
+        width: 90%;
+    }
+}

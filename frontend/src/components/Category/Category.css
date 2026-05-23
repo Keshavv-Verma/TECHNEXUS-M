@@ -1,0 +1,32 @@
+.category-main-content{
+    margin: 100px 0 75px 0;
+}
+.category-layout{
+    max-width: 1500px;
+    margin: 50px auto;
+}
+.category-title{
+    font-size: 34px;
+    text-align: center;
+}
+.product-container{
+    margin: 50px 0;
+    
+}
+
+
+@media screen and (max-width:990px){
+    .category-main-content {
+        margin: 100px 0 30px 0;
+    }
+    .category-title{
+        font-size: 24px;
+        margin-bottom: 50px;
+    }
+    .category-layout{
+        max-width: calc(100% - 60px);
+    }
+    .product-container{
+        margin: 20px 0;
+    }
+}

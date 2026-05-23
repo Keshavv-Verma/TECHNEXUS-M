@@ -1,0 +1,107 @@
+.product-card{
+    width: calc(25% - 15px);
+    margin-bottom: 20px;
+    background-color: transparent;
+    padding: 15px 15px;
+    transition: .2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.141);
+}
+
+.product-card:hover{
+    box-shadow: rgba(2, 188, 255, 0.8) 0px 25px 20px -20px;
+    background-color: rgba(109, 165, 244, 0.078);
+    transform: scale(1.01);
+}
+.thumbnail{
+    width: 100%;
+    height: 275px;
+    background-color: rgba(0, 0, 0, 0.05);
+    margin-bottom: 10px;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    position: relative;  
+}
+.price{
+    color: rgb(255, 255, 255);
+    font-size: 12px;
+}
+
+.bottom{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+}
+
+.navigate{
+    font-size: 15px;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+}
+.navigate:hover{
+    cursor: pointer;
+}
+
+.thumbnail{
+    overflow: hidden;
+}
+.thumbnail img{
+    transition: all ease .3s;
+    display: block;
+    width: 100%; 
+    height: 100%;
+    object-fit: cover;
+}
+
+
+.product-card .name{
+        font-size: 16px;
+        display: block;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
+      
+}
+.price{
+    position: relative;
+    font-size: 24px;
+}
+.price span{
+    font-weight: 100;
+   
+}
+.rupee-icon{
+    font-size: 16px;
+}
+
+
+@media screen and (max-width:990px){
+    .product-card{
+        width: calc(50% - 5px);
+        padding: 10px;
+    }
+    .thumbnail{
+        height: 180px;
+    }
+    .product-card .name{
+        font-size: 14px;
+    }
+    .price{
+        font-size: 18px;
+    }
+}
+@media screen and (max-width:490px){
+    .product-card{
+       padding: 3px;
+       margin-bottom: 10px;
+    }
+   
+    .product-card .name{
+        margin-bottom: 2px;
+    }
+    .prod-details{
+        padding: 3px;
+    }
+}

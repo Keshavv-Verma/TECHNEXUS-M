@@ -1,0 +1,287 @@
+.product-page-container {
+  min-height: 100vh;
+  padding: 120px 20px;
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.product-glass-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  max-width: 1200px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  animation: fadeIn 0.5s ease;
+}
+
+.product-image-section {
+  position: relative;
+}
+
+.main-image-container {
+  position: relative;
+  background: white;
+  border-radius: 15px;
+  padding: 20px;
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.main-image-container:hover {
+  transform: scale(1.02);
+}
+
+.main-product-image {
+  width: 100%;
+  height: 400px;
+  object-fit: contain;
+}
+
+.image-overlay {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  display: flex;
+  gap: 10px;
+}
+
+.overlay-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.overlay-btn:hover {
+  background: white;
+  transform: scale(1.1);
+}
+
+.product-info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  color: white;
+}
+
+.product-header h1 {
+  font-size: 2.2rem;
+  margin-bottom: 15px;
+  background: linear-gradient(90deg, #fff, #a0a0a0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.product-meta {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.rating-container {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.star {
+  color: #6b7280;
+  font-size: 20px;
+}
+
+.star.filled {
+  color: #fbbf24;
+}
+
+.rating-count {
+  color: #a0a0a0;
+  margin-left: 5px;
+}
+
+.product-category {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  padding: 5px 12px;
+  border-radius: 15px;
+  font-size: 0.9rem;
+}
+
+.price-section {
+  margin: 20px 0;
+}
+
+.price {
+  font-size: 2.5rem;
+  color: #4CAF50;
+  margin-bottom: 5px;
+}
+
+.tax-info {
+  color: #a0a0a0;
+  font-size: 0.9rem;
+}
+
+.product-description {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 20px;
+  border-radius: 12px;
+  margin: 20px 0;
+}
+
+.product-description h3 {
+  margin-bottom: 10px;
+  color: #4CAF50;
+}
+
+.product-features {
+  display: flex;
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #a0a0a0;
+}
+
+.feature-item svg {
+  color: #4CAF50;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.action-buttons button {
+  flex: 1;
+  padding: 15px;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+}
+
+.add-to-cart-btn {
+  background: rgba(76, 175, 80, 0.2);
+  color: #4CAF50;
+  border: 1px solid #4CAF50;
+}
+
+.add-to-cart-btn:hover {
+  background: rgba(76, 175, 80, 0.3);
+}
+
+.add-to-cart-btn.added {
+  background: #4CAF50;
+  color: white;
+  animation: pulse 0.5s ease;
+}
+
+.buy-now-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.buy-now-btn:hover {
+  background: #45a049;
+  transform: translateY(-2px);
+}
+
+.loading-container {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  gap: 20px;
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  border-top-color: #4CAF50;
+  animation: spin 1s linear infinite;
+}
+
+.error-container {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #ff4444;
+  font-size: 1.2rem;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (max-width: 768px) {
+  .product-glass-container {
+    grid-template-columns: 1fr;
+    padding: 20px;
+  }
+
+  .product-header h1 {
+    font-size: 1.8rem;
+  }
+
+  .price {
+    font-size: 2rem;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+}

@@ -1,0 +1,78 @@
+.shop-by-category{
+    margin: 50px 0;
+}
+.shop-by-category h2{
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 300;
+}
+.categories{
+    display: flex;
+
+    flex-wrap: wrap;
+    gap: 10px;
+    
+}
+.categories .category::after:hover:nth-child(1){
+    content: 'headphone';
+   
+    top: 20%;
+    right: 20%;
+}
+
+.category{
+    position: relative;
+    width: calc(25% - 10px);
+    overflow: hidden;
+    height: 300px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    color: rgba(0, 0, 0, 0.136);
+    
+}
+.category img{
+    width: 100%;
+    display: block;
+    transition: all ease 0.3s;
+    height: 100%;
+    object-fit: cover;
+}
+
+.headingggg{
+    position: absolute;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.349);
+   margin-bottom: 10px;
+}
+.headingggg span{
+    font-size: 16px;
+    font-weight: 500;
+    color: rgb(255, 255, 255);
+}
+
+.category img:hover{
+    transform: scale(1.2);
+}
+
+
+@media screen and (max-width:990px){
+    .shop-by-category{
+        margin: 25px 0;
+    }
+    .category{
+        width: calc(50% - 5px);
+        height: 200px;
+    }
+}
+
+@media screen and (max-width:590px){
+    .headingggg{
+        padding: 12px 6px;
+        font-size: 16px;
+    }
+    .shop-by-category h2{
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+}

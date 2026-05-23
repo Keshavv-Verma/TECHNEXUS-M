@@ -1,0 +1,5 @@
+.cart-page-wrapper {
+  margin-top: 8rem;
+  min-height: calc(100vh - 8rem);
+  padding: 30px 7.7%;
+}

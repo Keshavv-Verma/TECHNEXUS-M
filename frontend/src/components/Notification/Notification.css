@@ -1,0 +1,35 @@
+/* Notification.css */
+.notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    padding: 10px;
+    background: rgb(1, 103, 141);
+    color: white;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    opacity: 0;
+    transform: translateY(100%);
+    animation: slideInOut 2s ease-in-out forwards;
+    z-index: 9991;
+  }
+  
+  @keyframes slideInOut {
+    0% {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    10% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    90% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(-100%);
+    }
+  }
+  

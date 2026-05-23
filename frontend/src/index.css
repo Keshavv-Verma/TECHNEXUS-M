@@ -1,0 +1,99 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat&family=Outfit:wght@100;300;400;500;600;700;800&display=swap');
+
+/* width */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #34343434;
+}
+
+
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #003f83;
+  border-radius: 5px;
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #0081c1;
+}
+
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  
+  scroll-behavior: smooth;
+}
+
+h1,h2,h3,h4,p,a {
+  color: #fff;
+}
+
+body {
+  margin: 0;
+  font-family: 'Outfit', 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  background-color: #07090f ;
+  color: white;
+}
+ul {
+  list-style-type: none;
+}
+
+a {
+  text-decoration: none;
+}
+
+code {
+  font-family: 'source-code-pro', 'Courier New',
+    monospace;
+}
+
+.btn {
+  padding: 9px 32px;
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  background: transparent;
+  color: #fff;
+  border: 1px solid #fff;
+  cursor: pointer;
+  transition: .2s ease-in;
+  border-radius: 30px;
+}
+
+.btn-light {
+  background: rgba(255,255,255, .2);
+}
+
+.btn:hover {
+  background: rgba(255,255,255, .2);
+}
+
+.container{
+  padding: 30px 7.7%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.new-container{
+  
+  margin: 0 7.7%;
+}
+.icon{
+  color: white;
+}
+
+.rupee-icon{
+  font-size: 20px;
+}

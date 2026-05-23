@@ -1,0 +1,41 @@
+.product-container{
+    margin: 100px 20px 75px 20px;
+}
+.sec-heading {
+    
+    font-size: 24px;
+    font-weight: 500;
+    text-transform: uppercase;
+    margin-bottom: 35px;
+}
+.sec-heading::after{
+    content: "";
+    display: block;
+    margin-top: 10px;
+    width: 50px;
+    height: 3px;
+    background-color: #003f83;
+}
+.products{
+    display: flex;
+    flex-flow: wrap;
+    gap: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.097);
+    padding: 25px;
+}
+
+
+@media screen and (max-width:990px){
+    .product-container{
+        margin: 80px;
+    }
+    .sec-heading{
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+    .products{
+        gap: 10px;
+        padding: 10px;
+        
+    }
+}
