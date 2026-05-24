@@ -26,9 +26,13 @@ const config = {
   // Database (MongoDB Atlas)
   mongodb: {
     url: process.env.MONGODB_URL || process.env.DATABASE_URL,
+    connectRetries: parseInt(process.env.MONGODB_CONNECT_RETRIES || '5', 10),
+    connectRetryDelayMs: parseInt(process.env.MONGODB_CONNECT_RETRY_DELAY_MS || '5000', 10),
     options: {
       retryWrites: true,
       w: 'majority',
+      serverSelectionTimeoutMS: parseInt(process.env.MONGODB_SERVER_SELECTION_TIMEOUT_MS || '10000', 10),
+      socketTimeoutMS: parseInt(process.env.MONGODB_SOCKET_TIMEOUT_MS || '45000', 10),
     },
   },
 
@@ -36,6 +40,8 @@ const config = {
   jwt: {
     secret: process.env.JWT_SECRET,
     expiresIn: process.env.JWT_EXPIRE || '1h',
+    // New: refresh token expiration (default 7 days)
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRE || '7d',
   },
 
   // CORS
@@ -51,7 +57,7 @@ const config = {
       if (allowedOrigins.includes(origin) || allowVercelPreview) {
         return callback(null, true);
       }
-      
+
       return callback(new Error('CORS blocked origin: ' + origin), false);
     },
     credentials: true,
@@ -82,6 +88,19 @@ const config = {
     maxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || 100),
   },
 
+  // AI endpoints (stricter than general API)
+  aiRateLimit: {
+    windowMs: parseInt(process.env.AI_RATE_LIMIT_WINDOW_MS || 60000, 10),
+    maxRequests: parseInt(process.env.AI_RATE_LIMIT_MAX_REQUESTS || 10, 10),
+  },
+
+  // Gemini AI (server-side only — never expose in frontend)
+  gemini: {
+    apiKey: process.env.GEMINI_API_KEY,
+    model: process.env.GEMINI_MODEL || 'gemini-2.0-flash',
+    useFallback: process.env.AI_USE_FALLBACK !== 'false',
+  },
+
   // Logging
   logging: {
     level: process.env.LOG_LEVEL || 'debug',
@@ -91,14 +110,13 @@ const config = {
 
 // Validation for production
 if (config.isProduction) {
-  const requiredEnvVars = [
-    'DATABASE_URL',
-    'JWT_SECRET',
-    'STRIPE_SECRET_KEY',
-    'CORS_ORIGIN',
-  ];
+  const requiredEnvVars = ['JWT_SECRET', 'STRIPE_SECRET_KEY', 'CORS_ORIGIN', 'GEMINI_API_KEY'];
+  const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
-  const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+  if (!process.env.DATABASE_URL && !process.env.MONGODB_URL) {
+    missingEnvVars.push('DATABASE_URL or MONGODB_URL');
+  }
+
   if (missingEnvVars.length > 0) {
     throw new Error(`Missing required environment variables: ${missingEnvVars.join(', ')}`);
   }

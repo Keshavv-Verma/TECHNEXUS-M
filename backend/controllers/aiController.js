@@ -1,4 +1,5 @@
 const { Product } = require('../models');
+const logger = require('../utils/logger');
 const { getAIRecommendations, chatWithAI } = require('../services/geminiService');
 
 /**
@@ -48,7 +49,7 @@ const getRecommendations = async (req, res, next) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error fetching AI recommendations:', error);
+    logger.error('Error fetching AI recommendations', error.message);
     next(error);
   }
 };
@@ -90,7 +91,7 @@ const aiChat = async (req, res, next) => {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error in AI chat:', error);
+    logger.error('Error in AI chat', error.message);
     res.status(error.statusCode || 500).json({
       success: false,
       error: error.message || 'AI chat failed',

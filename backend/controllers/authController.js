@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const config = require('../config');
+const logger = require('../utils/logger');
 const { signupSchema, loginSchema } = require('../utils/validationSchemas');
 
 /**
@@ -30,7 +31,7 @@ const signup = async (req, res, next) => {
       userId: user._id,
     });
   } catch (error) {
-    console.error('Error creating user:', error);
+    logger.error('Error creating user', error.message);
     
     // Handle duplicate key error
     if (error.code === 11000 && error.keyPattern.email) {
@@ -54,21 +55,15 @@ const login = async (req, res, next) => {
     }
 
     const { email, password } = value;
-    console.log('Login attempt:', { email, passwordLength: password.length });
+    logger.debug('Login attempt', { email: email.toLowerCase() });
 
-    // Find user by email
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      console.log('User not found:', email.toLowerCase());
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    console.log('User found:', { email: user.email, isAdmin: user.isAdmin, hashedPasswordLength: user.password.length });
-
-    // Verify password using bcrypt
     const isPasswordValid = await bcrypt.compare(password, user.password);
-    console.log('Password validation result:', isPasswordValid);
     
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
@@ -81,14 +76,147 @@ const login = async (req, res, next) => {
       { expiresIn: config.jwt.expiresIn }
     );
 
+    // Helper to parse duration string to ms
+    const parseDuration = (str) => {
+      const match = str.match(/^(\d+)([dhm])$/);
+      if (!match) return 7 * 24 * 60 * 60 * 1000;
+      const value = parseInt(match[1]);
+      const unit = match[2];
+      switch (unit) {
+        case 'd': return value * 24 * 60 * 60 * 1000;
+        case 'h': return value * 60 * 60 * 1000;
+        case 'm': return value * 60 * 1000;
+        default: return 7 * 24 * 60 * 60 * 1000;
+      }
+    };
+
+    // Generate Refresh token
+    const refreshToken = jwt.sign(
+      { userId: user._id },
+      config.jwt.secret,
+      { expiresIn: config.jwt.refreshExpiresIn }
+    );
+
+    // Save refresh token to user
+    const refreshExpires = new Date(Date.now() + parseDuration(config.jwt.refreshExpiresIn));
+    user.refreshTokens.push({ token: refreshToken, expires: refreshExpires });
+    await user.save();
+
     res.json({
       token,
+      refreshToken,
       isAdmin: user.isAdmin,
       userId: user._id,
       message: 'Login successful',
     });
   } catch (error) {
-    console.error('Login error:', error);
+    logger.error('Login error', error.message);
+    next(error);
+  }
+};
+
+/**
+ * POST /api/refresh-token
+ * Refresh access token using a valid refresh token
+ */
+const refreshToken = async (req, res, next) => {
+  try {
+    const { refreshToken: incomingToken } = req.body;
+    if (!incomingToken) {
+      return res.status(401).json({ error: 'Refresh token is required' });
+    }
+
+    // Verify incoming refresh token
+    let decoded;
+    try {
+      decoded = jwt.verify(incomingToken, config.jwt.secret);
+    } catch (err) {
+      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+
+    const user = await User.findById(decoded.userId);
+    if (!user) {
+      return res.status(401).json({ error: 'User not found' });
+    }
+
+    // Check if the refresh token is in user's refreshTokens and not expired
+    const activeTokenIndex = user.refreshTokens.findIndex(
+      (t) => t.token === incomingToken && t.expires > new Date()
+    );
+
+    if (activeTokenIndex === -1) {
+      return res.status(401).json({ error: 'Invalid or expired refresh token' });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { userId: user._id, isAdmin: user.isAdmin, email: user.email },
+      config.jwt.secret,
+      { expiresIn: config.jwt.expiresIn }
+    );
+
+    // Rotate refresh token: generate new refresh token
+    const newRefreshToken = jwt.sign(
+      { userId: user._id },
+      config.jwt.secret,
+      { expiresIn: config.jwt.refreshExpiresIn }
+    );
+
+    // Helper to parse duration string to ms
+    const parseDuration = (str) => {
+      const match = str.match(/^(\d+)([dhm])$/);
+      if (!match) return 7 * 24 * 60 * 60 * 1000;
+      const value = parseInt(match[1]);
+      const unit = match[2];
+      switch (unit) {
+        case 'd': return value * 24 * 60 * 60 * 1000;
+        case 'h': return value * 60 * 60 * 1000;
+        case 'm': return value * 60 * 1000;
+        default: return 7 * 24 * 60 * 60 * 1000;
+      }
+    };
+
+    const refreshExpires = new Date(Date.now() + parseDuration(config.jwt.refreshExpiresIn));
+
+    // Remove the old token and save the new rotated one
+    user.refreshTokens.splice(activeTokenIndex, 1);
+    user.refreshTokens.push({ token: newRefreshToken, expires: refreshExpires });
+    await user.save();
+
+    res.json({
+      token: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
+  } catch (error) {
+    logger.error('Refresh token error', error.message);
+    next(error);
+  }
+};
+
+/**
+ * POST /api/logout
+ * Revoke/delete the refresh token for a user
+ */
+const logout = async (req, res, next) => {
+  try {
+    const { refreshToken: incomingToken } = req.body;
+    if (incomingToken) {
+      // Find user who owns this token and remove it
+      let decoded;
+      try {
+        decoded = jwt.verify(incomingToken, config.jwt.secret);
+        const user = await User.findById(decoded.userId);
+        if (user) {
+          user.refreshTokens = user.refreshTokens.filter((t) => t.token !== incomingToken);
+          await user.save();
+        }
+      } catch (err) {
+        // Even if token verification fails, we can just proceed
+      }
+    }
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    logger.error('Logout error', error.message);
     next(error);
   }
 };
@@ -96,4 +224,6 @@ const login = async (req, res, next) => {
 module.exports = {
   signup,
   login,
+  refreshToken,
+  logout,
 };

@@ -1,4 +1,5 @@
 const config = require('../config');
+const logger = require('../utils/logger');
 const { Order } = require('../models');
 const { getStripe } = require('../services/stripeService');
 
@@ -57,11 +58,9 @@ const createCheckoutSession = async (req, res) => {
     });
 
     if (config.isDevelopment) {
-      console.log('[Stripe] checkout session created:', {
+      logger.debug('[Stripe] checkout session created', {
         sessionId: session.id,
         amountPaise,
-        amountRupees: amountPaise / 100,
-        currency: 'inr',
       });
     }
 
@@ -75,7 +74,7 @@ const createCheckoutSession = async (req, res) => {
     });
   } catch (error) {
     const detail = error?.message;
-    console.error('Stripe checkout session error:', detail || error);
+    logger.error('Stripe checkout session error', detail || error.message);
     res.status(500).json({
       error: 'Failed to create Stripe checkout session',
       ...(config.isDevelopment && detail ? { detail } : {}),
@@ -129,7 +128,7 @@ const verifyCheckoutSession = async (req, res) => {
     try {
       existingOrder = await Order.findOne({ stripePaymentIntentId: paymentIntentId });
     } catch (dbErr) {
-      console.error('Stripe duplicate check skipped (DB error):', dbErr.message);
+      logger.warn('Stripe duplicate check skipped', dbErr.message);
     }
 
     if (existingOrder) {
@@ -153,7 +152,7 @@ const verifyCheckoutSession = async (req, res) => {
       duplicate: false,
     });
   } catch (error) {
-    console.error('Stripe session verification error:', error);
+    logger.error('Stripe session verification error', error.message);
     res.status(500).json({
       error: 'Payment verification failed',
       ...(config.isDevelopment ? { detail: error.message } : {}),

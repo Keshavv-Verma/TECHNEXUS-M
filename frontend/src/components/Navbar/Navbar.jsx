@@ -114,11 +114,23 @@ const Navbar = () => {
           </div>
 
           <div className="navigation">
-            <ul
-              className={clicked ? "menu" : "menu close"}
-              onClick={handleClick}
-            >
+            <ul className={clicked ? "menu open" : "menu"} onClick={handleClick}>
               {menuList}
+              {/* Mobile-only items */}
+              <li className="mobile-show">
+                <Link to="/orders" className="menu-links mobile-show">
+                  Orders
+                </Link>
+              </li>
+              <li className="mobile-show" onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }}>
+                <BsCart />
+                {!!cartCount && <span className="cart-num">{cartCount}</span>}
+              </li>
+              <li className="mobile-show logout-item">
+                <span className="menu-links" onClick={handleSignIn}>
+                  {isLoggedIn() ? <span>Logout</span> : <FiUser />}
+                </span>
+              </li>
             </ul>
           </div>
 
@@ -131,17 +143,19 @@ const Navbar = () => {
             >
               <TbSearch />
             </span>
-            <span className="sign-in-icon" onClick={handleSignIn}>
+            <span className="sign-in-icon mobile-hide" onClick={handleSignIn}>
               {isLoggedIn() ? <span>Logout</span> : <FiUser />}
             </span>
             {loggedIn && (
               <Link
                 to="/orders"
+                className="mobile-hide"
                 style={{
                   color: 'inherit',
                   textDecoration: 'none',
-                  fontSize: 14,
+                  fontSize: 22,
                   marginRight: 8,
+                  marginTop: 2
                 }}
               >
                 Orders
@@ -149,7 +163,7 @@ const Navbar = () => {
             )}
             <span
               onClick={() => navigate('/cart')}
-              className="cart-icon"
+              className="cart-icon mobile-hide"
               role="button"
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && navigate('/cart')}
@@ -165,6 +179,7 @@ const Navbar = () => {
             {isAdmin && isLoggedIn() && (
               <Link 
                 to="/dashboard" 
+                className="mobile-hide"
                 style={{
                   padding: '8px 16px',
                   backgroundColor: '#4CAF50',

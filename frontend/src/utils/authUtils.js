@@ -1,4 +1,4 @@
-const AUTH_KEYS = ['token', 'userId', 'isAdmin', 'currentUser'];
+const AUTH_KEYS = ['token', 'refreshToken', 'userId', 'isAdmin', 'currentUser'];
 
 export const getToken = () => localStorage.getItem('token');
 

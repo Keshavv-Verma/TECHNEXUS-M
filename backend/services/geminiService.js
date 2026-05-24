@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const logger = require('../utils/logger');
 const {
   rankProductsForQuery,
   buildFallbackRecommendations,
@@ -111,14 +112,14 @@ Find the best matching product(s) from the catalog. Return ONLY valid JSON.`;
     const response = result.response;
     const textContent = response.text();
 
-    console.log('Gemini Response:', textContent.substring(0, 200)); // Log first 200 chars
+    logger.debug('Gemini response received', { length: textContent.length });
 
     // Parse JSON response
     try {
       // Extract JSON from response
       const jsonMatch = textContent.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        console.error('No JSON found in response:', textContent);
+        logger.warn('No JSON found in Gemini response');
         if (USE_GEMINI_FALLBACK) {
           return buildFallbackRecommendations(userQuery, products);
         }
@@ -155,7 +156,7 @@ Find the best matching product(s) from the catalog. Return ONLY valid JSON.`;
         source: 'gemini',
       };
     } catch (parseError) {
-      console.error('JSON Parse Error:', parseError.message);
+      logger.warn('Gemini JSON parse error', parseError.message);
       if (USE_GEMINI_FALLBACK) {
         return buildFallbackRecommendations(userQuery, products);
       }
@@ -167,9 +168,9 @@ Find the best matching product(s) from the catalog. Return ONLY valid JSON.`;
       };
     }
   } catch (error) {
-    console.error('Error in getAIRecommendations:', error);
+    logger.error('Error in getAIRecommendations', error.message);
     if (USE_GEMINI_FALLBACK) {
-      console.warn('Gemini unavailable, using keyword fallback');
+      logger.warn('Gemini unavailable, using keyword fallback');
       return buildFallbackRecommendations(userQuery, products);
     }
     const classified = classifyGeminiError(error);
@@ -214,11 +215,11 @@ Respond helpfully with product recommendations ONLY from the list above. Be conc
     const result = await model.generateContent(prompt);
     const response = result.response.text();
     
-    console.log('Chat Response:', response.substring(0, 100));
-    
+    logger.debug('AI chat response received', { length: response.length });
+
     return response;
   } catch (error) {
-    console.error('Error in chatWithAI:', error);
+    logger.error('Error in chatWithAI', error.message);
     if (USE_GEMINI_FALLBACK) {
       const fallback = buildFallbackRecommendations(message, products);
       if (fallback.success) {

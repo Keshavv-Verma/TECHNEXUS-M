@@ -31,9 +31,12 @@ const AuthForm = () => {
         ? { email: formData.email, password: formData.password }
         : formData;
 
+      if (!isLogin && formData.password.length < 12) {
+        alert('Password must be at least 12 characters');
+        return;
+      }
+
       const apiUrl = `${process.env.REACT_APP_API_URL}/api/${isLogin ? 'login' : 'signup'}`;
-      console.log('📤 Sending request to:', apiUrl);
-      console.log('📝 Payload:', payload);
 
       const response = await fetch(apiUrl, {
         method: 'POST',
@@ -44,13 +47,12 @@ const AuthForm = () => {
       });
 
       const data = await response.json();
-      console.log('📥 Response status:', response.status);
-      console.log('📥 Response data:', data);
-      
+
       if (response.ok) {
         if (isLogin) {
           clearAuth();
           localStorage.setItem('token', data.token);
+          if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
           localStorage.setItem('isAdmin', String(data.isAdmin));
           if (data.userId) localStorage.setItem('userId', data.userId);
           localStorage.setItem('currentUser', JSON.stringify({
@@ -66,11 +68,9 @@ const AuthForm = () => {
           alert('Registration successful! Please login.');
         }
       } else {
-        console.error('❌ Auth failed:', data.error);
         alert(data.error || 'Authentication failed');
       }
     } catch (error) {
-      console.error('❌ Auth error:', error);
       alert('Authentication failed: ' + error.message);
     }
   };
@@ -128,9 +128,10 @@ const AuthForm = () => {
               <input
                 type="password"
                 name="password"
-                placeholder="Password"
+                placeholder={isLogin ? 'Password' : 'Password (min. 12 characters)'}
                 value={formData.password}
                 onChange={handleChange}
+                minLength={isLogin ? undefined : 12}
                 required
               />
             </div>

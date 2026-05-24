@@ -20,12 +20,19 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      minlength: [6, 'Password must be at least 6 characters'],
+      minlength: [12, 'Password must be at least 12 characters'],
     },
     isAdmin: {
       type: Boolean,
       default: false,
     },
+    // Store refresh tokens (plain for demo) with expiry
+    refreshTokens: [
+      {
+        token: { type: String, required: true },
+        expires: { type: Date, required: true },
+      },
+    ],
   },
   {
     timestamps: true,

@@ -1,7 +1,19 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
+const config = require('../config');
 const { getRecommendations, aiChat } = require('../controllers/aiController');
 
 const router = express.Router();
+
+const aiLimiter = rateLimit({
+  windowMs: config.aiRateLimit.windowMs,
+  max: config.aiRateLimit.maxRequests,
+  message: { error: 'Too many AI requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(aiLimiter);
 
 /**
  * @route   GET /api/ai/recommendations

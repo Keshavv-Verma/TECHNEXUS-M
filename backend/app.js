@@ -16,11 +16,60 @@ const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const errorHandler = require('./middlewares/errorHandler');
+const logger = require('./utils/logger');
 
 const app = express();
 
-// Security middleware
-app.use(helmet()); // Add security headers
+// Proxy endpoint for matveyan.com to bypass SAMEORIGIN restriction
+app.get('/api/proxy-matveyan', async (req, res) => {
+  try {
+    const response = await fetch('https://matveyan.com/', {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      }
+    });
+
+    if (!response.ok) {
+      return res.status(response.status).send(`Failed to fetch matveyan.com: ${response.statusText}`);
+    }
+
+    let html = await response.text();
+    // Inject <base> tag to resolve all relative assets to the source domain
+    html = html.replace('<head>', '<head><base href="https://matveyan.com/">');
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+  } catch (error) {
+    logger.error('Error in matveyan.com proxy', error.message);
+    res.status(500).send('Failed to proxy website');
+  }
+});
+
+// Security headers (CSP, HSTS in production, deny framing)
+const helmetOptions = {
+  frameguard: { action: 'deny' },
+  contentSecurityPolicy: {
+    useDefaults: true,
+    directives: {
+      defaultSrc: ["'none'"],
+      frameAncestors: ["'none'"],
+      baseUri: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: false,
+};
+
+if (config.isProduction) {
+  helmetOptions.hsts = {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true,
+  };
+} else {
+  helmetOptions.hsts = false;
+}
+
+app.use(helmet(helmetOptions));
 
 // CORS configuration from config
 app.use(cors(config.cors));

@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const app = require('./app');
 const config = require('./config');
+const logger = require('./utils/logger');
 const { connectDB, disconnectDB, mongoose } = require('./models');
 
 const PORT = config.port;
@@ -15,12 +16,11 @@ const startServer = async () => {
     await connectDB();
     
     server = app.listen(PORT, HOST, () => {
-      console.log(`Server running on ${HOST}:${PORT}`);
-      console.log(`Environment: ${config.nodeEnv}`);
-      console.log('Database: MongoDB Atlas configured');
+      logger.info(`Server running on ${HOST}:${PORT}`);
+      logger.info(`Environment: ${config.nodeEnv}`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    logger.error('Failed to start server', error.message);
     process.exit(1);
   }
 };
@@ -29,7 +29,7 @@ startServer();
 
 // Graceful shutdown
 const gracefulShutdown = async (signal) => {
-  console.log(`${signal} signal received: closing HTTP server`);
+  logger.info(`${signal} signal received: closing HTTP server`);
   server.close(async () => {
     await disconnectDB();
     process.exit(0);

@@ -1,4 +1,6 @@
 const { Product, Category, Review } = require('../models');
+const config = require('../config');
+const logger = require('../utils/logger');
 
 /**
  * GET /api/products
@@ -44,7 +46,7 @@ const getAllProducts = async (req, res, next) => {
     const products = await query.exec();
     res.json(products);
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logger.error('Error fetching products', error.message);
     next(error);
   }
 };
@@ -81,7 +83,7 @@ const getProductsByCategory = async (req, res, next) => {
     const products = await query.exec();
     res.json(products);
   } catch (error) {
-    console.error('Error fetching products by category:', error);
+    logger.error('Error fetching products by category', error.message);
     next(error);
   }
 };
@@ -107,7 +109,7 @@ const getProductById = async (req, res, next) => {
     }
     res.json(product);
   } catch (error) {
-    console.error('Error:', error);
+    logger.error('Product controller error', error.message);
     next(error);
   }
 };
@@ -118,8 +120,9 @@ const getProductById = async (req, res, next) => {
  */
 const createProduct = async (req, res, next) => {
   try {
-    console.log('Received product data:', req.body);
-    console.log('User:', req.user);
+    if (config.isDevelopment) {
+      logger.debug('Create product request', { productId: req.params?.id });
+    }
 
     // First, find or create category
     let category = await Category.findOne({
@@ -146,10 +149,9 @@ const createProduct = async (req, res, next) => {
 
     const populatedProduct = await product.populate('categoryId');
 
-    console.log('Saved product:', populatedProduct);
     res.status(201).json(populatedProduct);
   } catch (error) {
-    console.error('Error saving product:', error);
+    logger.error('Error saving product', error.message);
     next(error);
   }
 };
@@ -160,8 +162,7 @@ const createProduct = async (req, res, next) => {
  */
 const updateProduct = async (req, res, next) => {
   try {
-    console.log('Updating product:', req.params.id);
-    console.log('Update data:', req.body);
+    logger.debug('Update product request', { id: req.params.id });
 
     const { name, price, rating, image, description, category, stock, specifications } = req.body;
 
@@ -204,13 +205,12 @@ const updateProduct = async (req, res, next) => {
       { new: true }
     ).populate('categoryId');
 
-    console.log('Product updated successfully:', updatedProduct.name);
     res.json({
       message: 'Product updated successfully',
       product: updatedProduct,
     });
   } catch (error) {
-    console.error('Error updating product:', error.message);
+    logger.error('Error updating product:', error.message);
     next(error);
   }
 };
@@ -221,20 +221,17 @@ const updateProduct = async (req, res, next) => {
  */
 const deleteProduct = async (req, res, next) => {
   try {
-    console.log('Deleting product:', req.params.id);
     const deleted = await Product.findByIdAndDelete(req.params.id);
-    
+
     if (!deleted) {
       return res.status(404).json({ error: 'Product not found' });
     }
-    
-    console.log('Product deleted successfully:', deleted.name);
     res.json({
       message: 'Product deleted successfully',
       product: deleted,
     });
   } catch (error) {
-    console.error('Error deleting product:', error.message);
+    logger.error('Error deleting product:', error.message);
     next(error);
   }
 };
@@ -261,7 +258,7 @@ const getCategories = async (req, res, next) => {
       return res.json(products);
     }
   } catch (error) {
-    console.error('Error fetching products:', error);
+    logger.error('Error fetching products', error.message);
     next(error);
   }
 };

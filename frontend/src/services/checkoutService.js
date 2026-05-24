@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { AuthError, clearAuth } from '../utils/authUtils';
 
 const getApiBase = () => {
@@ -8,52 +9,41 @@ const getApiBase = () => {
   return raw.replace(/\/+$/, '');
 };
 
-const buildUrl = (path) => `${getApiBase()}${path.startsWith('/') ? path : `/${path}`}`;
-
-const authHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-};
-
-const handleResponse = async (res) => {
-  const data = await res.json().catch(() => ({}));
-
-  if (res.status === 401) {
-    clearAuth();
-    throw new AuthError(
-      data.error === 'No token provided'
-        ? 'Please sign in to continue checkout.'
-        : 'Your session has expired. Please sign in again.'
-    );
-  }
-
-  if (!res.ok) {
-    if (res.status === 404) {
-      throw new Error(
-        data.error === 'Route not found'
-          ? 'Checkout service unavailable. Ensure the backend is running and up to date.'
-          : data.error || 'Resource not found'
-      );
-    }
-    const err = new Error(data.error || `Request failed (${res.status})`);
-    if (data.detail) err.detail = data.detail;
-    if (data.verified === false) err.verified = false;
-    throw err;
-  }
-
-  return data;
+const handleResponse = (promise) => {
+  return promise
+    .then(res => res.data)
+    .catch(err => {
+      if (err.response) {
+        const data = err.response.data || {};
+        if (err.response.status === 401) {
+          clearAuth();
+          throw new AuthError(
+            data.error === 'No token provided'
+              ? 'Please sign in to continue checkout.'
+              : 'Your session has expired. Please sign in again.'
+          );
+        }
+        if (err.response.status === 404) {
+          throw new Error(
+            data.error === 'Route not found'
+              ? 'Checkout service unavailable. Ensure the backend is running and up to date.'
+              : data.error || 'Resource not found'
+          );
+        }
+        const error = new Error(data.error || `Request failed (${err.response.status})`);
+        if (data.detail) error.detail = data.detail;
+        if (data.verified === false) error.verified = false;
+        throw error;
+      }
+      throw err;
+    });
 };
 
 export const getCheckoutConfig = async () => {
   try {
-    const res = await fetch(buildUrl('/api/checkout/config'));
-    return handleResponse(res);
+    return await handleResponse(axios.get(`${getApiBase()}/api/checkout/config`));
   } catch (err) {
     if (err instanceof AuthError) throw err;
-    // Fallback so cart UI still works if config endpoint is unreachable
     return {
       freeDeliveryThreshold: 999,
       shippingCharge: 49,
@@ -65,85 +55,46 @@ export const getCheckoutConfig = async () => {
 };
 
 export const previewCheckout = (payload) =>
-  fetch(buildUrl('/api/checkout/preview'), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify(payload),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.post(`${getApiBase()}/api/checkout/preview`, payload));
 
 export const validateCoupon = (code, subtotal) =>
-  fetch(buildUrl('/api/coupons/validate'), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ code, subtotal }),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.post(`${getApiBase()}/api/coupons/validate`, { code, subtotal }));
 
 export const getAddresses = () =>
-  fetch(buildUrl('/api/addresses'), { headers: authHeaders() }).then((r) => handleResponse(r));
+  handleResponse(axios.get(`${getApiBase()}/api/addresses`));
 
 export const createAddress = (address) =>
-  fetch(buildUrl('/api/addresses'), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify(address),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.post(`${getApiBase()}/api/addresses`, address));
 
 export const updateAddress = (id, address) =>
-  fetch(buildUrl('/api/addresses/' + id), {
-    method: 'PUT',
-    headers: authHeaders(),
-    body: JSON.stringify(address),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.put(`${getApiBase()}/api/addresses/${id}`, address));
 
 export const deleteAddress = (id) =>
-  fetch(buildUrl('/api/addresses/' + id), {
-    method: 'DELETE',
-    headers: authHeaders(),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.delete(`${getApiBase()}/api/addresses/${id}`));
 
 export const setDefaultAddress = (id) =>
-  fetch(buildUrl('/api/addresses/' + id + '/default'), {
-    method: 'PATCH',
-    headers: authHeaders(),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.patch(`${getApiBase()}/api/addresses/${id}/default`));
 
 export const placeOrder = (payload) =>
-  fetch(buildUrl('/api/orders'), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify(payload),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.post(`${getApiBase()}/api/orders`, payload));
 
 export const getOrder = (id) =>
-  fetch(buildUrl('/api/orders/' + id), { headers: authHeaders() }).then((r) => handleResponse(r));
+  handleResponse(axios.get(`${getApiBase()}/api/orders/${id}`));
 
 export const getOrderByNumber = (orderNumber) =>
-  fetch(buildUrl('/api/orders/track/' + orderNumber), {
-    headers: authHeaders(),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.get(`${getApiBase()}/api/orders/track/${orderNumber}`));
 
 export const getMyOrders = () =>
-  fetch(buildUrl('/api/orders'), { headers: authHeaders() }).then((r) => handleResponse(r));
+  handleResponse(axios.get(`${getApiBase()}/api/orders`));
 
 export const getAdminOrders = () =>
-  fetch(buildUrl('/api/admin/orders'), { headers: authHeaders() }).then((r) => handleResponse(r));
+  handleResponse(axios.get(`${getApiBase()}/api/admin/orders`));
 
 export const markOrderReceived = (orderId) =>
-  fetch(buildUrl('/api/orders/' + orderId + '/received'), {
-    method: 'PATCH',
-    headers: authHeaders(),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.patch(`${getApiBase()}/api/orders/${orderId}/received`));
 
 export const createStripeCheckoutSession = (amount, { customerEmail, successUrl, cancelUrl } = {}) =>
-  fetch(buildUrl('/api/payments/stripe/create-checkout-session'), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ amount, customerEmail, successUrl, cancelUrl }),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.post(`${getApiBase()}/api/payments/stripe/create-checkout-session`, { amount, customerEmail, successUrl, cancelUrl }));
 
 export const verifyStripeSession = (sessionId) =>
-  fetch(buildUrl('/api/payments/stripe/verify-session'), {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ sessionId }),
-  }).then((r) => handleResponse(r));
+  handleResponse(axios.post(`${getApiBase()}/api/payments/stripe/verify-session`, { sessionId }));

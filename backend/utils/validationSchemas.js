@@ -4,7 +4,9 @@ const Joi = require('joi');
 const signupSchema = Joi.object({
   name: Joi.string().required().min(2).max(100),
   email: Joi.string().email().required(),
-  password: Joi.string().required().min(8).max(128),
+  password: Joi.string().required().min(12).max(128).messages({
+    'string.min': 'Password must be at least 12 characters',
+  }),
 });
 
 // User login validation schema

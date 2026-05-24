@@ -1,4 +1,5 @@
 const config = require('../config');
+const logger = require('../utils/logger');
 
 /**
  * Global error handling middleware
@@ -6,7 +7,10 @@ const config = require('../config');
  * Must be registered as the last middleware in app.js
  */
 const errorHandler = (err, req, res, next) => {
-  console.error('Error:', err);
+  logger.error('Request error', config.isDevelopment ? err.message : 'Internal error');
+  if (config.isDevelopment && err.stack) {
+    logger.debug(err.stack);
+  }
 
   // Joi validation errors
   if (err.isJoi) {
