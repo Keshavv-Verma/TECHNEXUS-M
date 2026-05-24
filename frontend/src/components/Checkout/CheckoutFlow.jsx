@@ -48,8 +48,6 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('COD');
-  const [cardDetails, setCardDetails] = useState({});
-  const [cardErrors, setCardErrors] = useState({});
   const [processing, setProcessing] = useState(false);
   const [toast, setToast] = useState(null);
   const [sessionExpired, setSessionExpired] = useState(false);
@@ -542,9 +540,6 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
               <PaymentMethods
                 method={paymentMethod}
                 onMethodChange={setPaymentMethod}
-                cardDetails={cardDetails}
-                onCardChange={setCardDetails}
-                cardErrors={cardErrors}
               />
             </>
           )}
