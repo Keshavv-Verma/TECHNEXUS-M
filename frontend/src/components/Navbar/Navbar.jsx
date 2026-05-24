@@ -1,35 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Search from "../Search/Search";
-import { NavLink, useNavigate, Link } from "react-router-dom";
+import { NavLink, useNavigate, Link, useLocation } from "react-router-dom";
 import { TbSearch } from "react-icons/tb";
 import { FaTimes } from "react-icons/fa";
-import { FiGrid } from "react-icons/fi";
+import { FiMenu } from "react-icons/fi";
 import { BsCart } from "react-icons/bs";
-import { FiUser } from "react-icons/fi"; // Import the user icon
+import { FiUser, FiLogOut, FiPackage } from "react-icons/fi";
 import "./Navbar.css";
-import { clearAuth, isLoggedIn, getToken, isTokenExpired, AUTH_CHANGED_EVENT } from "../../utils/authUtils";
+import {
+  clearAuth,
+  isLoggedIn,
+  getToken,
+  isTokenExpired,
+  AUTH_CHANGED_EVENT,
+} from "../../utils/authUtils";
 
 const nav_links = [
-  {
-    url: "/",
-    title: "Home",
-  },
-  {
-    url: "/electronics",
-    title: "Electronics",
-  },
-  {
-    url: "/mobandaccess",
-    title: "Mobile and Accessories",
-  },
-  {
-    url: "/more",
-    title: "More",
-  },
+  { url: "/", title: "Home" },
+  { url: "/electronics", title: "Electronics" },
+  { url: "/mobandaccess", title: "Mobile and Accessories" },
+  { url: "/more", title: "More" },
 ];
+
+const navLinkClass = ({ isActive }) =>
+  `tn-navbar__link nav-link-ltr${isActive ? " tn-navbar__link--active" : ""}`;
 
 const Navbar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [clicked, setClicked] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [cartCount, setCartCount] = useState(0);
@@ -37,169 +35,285 @@ const Navbar = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
 
+  const updateCartCount = useCallback(() => {
+    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+    const count = cart.reduce((total, item) => total + (item.quantity || 0), 0);
+    setCartCount(count);
+  }, []);
+
+  const checkAuthStatus = useCallback(() => {
+    const token = getToken();
+    if (token && isTokenExpired(token)) {
+      clearAuth();
+    }
+    const isAdminUser = localStorage.getItem("isAdmin");
+    const authed = isLoggedIn();
+    setLoggedIn(authed);
+    setIsAdmin(authed && isAdminUser === "true");
+  }, []);
+
   useEffect(() => {
-    const updateCartCount = () => {
-      const cart = JSON.parse(localStorage.getItem('cart')) || [];
-      const count = cart.reduce((total, item) => total + item.quantity, 0);
-      setCartCount(count);
-    };
-
-    const checkAuthStatus = () => {
-      const token = getToken();
-      if (token && isTokenExpired(token)) {
-        clearAuth();
-      }
-      const isAdminUser = localStorage.getItem('isAdmin');
-      const authed = isLoggedIn();
-      setLoggedIn(authed);
-      setIsAdmin(authed && isAdminUser === 'true');
-    };
-
     updateCartCount();
     checkAuthStatus();
 
-    window.addEventListener('cartUpdated', updateCartCount);
-    window.addEventListener('storage', checkAuthStatus);
+    window.addEventListener("cartUpdated", updateCartCount);
+    window.addEventListener("storage", checkAuthStatus);
     window.addEventListener(AUTH_CHANGED_EVENT, checkAuthStatus);
 
     return () => {
-      window.removeEventListener('cartUpdated', updateCartCount);
-      window.removeEventListener('storage', checkAuthStatus);
+      window.removeEventListener("cartUpdated", updateCartCount);
+      window.removeEventListener("storage", checkAuthStatus);
       window.removeEventListener(AUTH_CHANGED_EVENT, checkAuthStatus);
     };
+  }, [updateCartCount, checkAuthStatus]);
+
+  useEffect(() => {
+    const onScroll = () => setColor(window.scrollY >= 24);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const changeColor = () => {
-    if (window.scrollY >= 90) {
-      setColor(true);
-    } else {
-      setColor(false);
-    }
-  };
+  useEffect(() => {
+    setClicked(false);
+  }, [location.pathname]);
 
-  window.addEventListener("scroll", changeColor);
+  useEffect(() => {
+    if (!clicked) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") setClicked(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, [clicked]);
 
-  const menuList = nav_links.map(({ url, title }, index) => {
-    return (
-      <li key={index}>
-        <NavLink to={url} className="menu-links nav-link-ltr">
-          {title}
-        </NavLink>
-      </li>
-    );
-  });
-
-  const handleClick = () => {
-    setClicked(!clicked);
-  };
+  const handleClick = () => setClicked((prev) => !prev);
 
   const handleSignIn = () => {
     if (isLoggedIn()) {
       clearAuth();
       setIsAdmin(false);
       setLoggedIn(false);
-      navigate('/');
+      setClicked(false);
+      navigate("/");
     } else {
       if (getToken()) clearAuth();
-      navigate('/login');
+      setClicked(false);
+      navigate("/login");
     }
   };
 
+  const closeDrawer = () => setClicked(false);
+
+  const authed = isLoggedIn();
+
   return (
     <>
-      <div className={color ? "navbar navbar-bg" : "navbar"}>
-        <div className="nav-wrapper">
-          <div className="logo" onClick={() => navigate("/")}>
+      <header
+        className={`navbar tn-navbar${color ? " navbar-bg tn-navbar--scrolled" : ""}`}
+        role="banner"
+      >
+        <div className="nav-wrapper tn-navbar__inner">
+          <div
+            className="logo tn-navbar__brand"
+            onClick={() => navigate("/")}
+            onKeyDown={(e) => e.key === "Enter" && navigate("/")}
+            role="button"
+            tabIndex={0}
+            aria-label="TechNexus home"
+          >
             <h1>
               Tech<strong>Nexus</strong>
             </h1>
           </div>
 
-          <div className="navigation">
-            <ul className={clicked ? "menu open" : "menu"} onClick={handleClick}>
-              {menuList}
-              {/* Mobile-only items */}
-              <li className="mobile-show">
-                <Link to="/orders" className="menu-links mobile-show">
-                  Orders
-                </Link>
-              </li>
-              <li className="mobile-show" onClick={() => navigate('/cart')} style={{ cursor: 'pointer' }}>
-                <BsCart />
-                {!!cartCount && <span className="cart-num">{cartCount}</span>}
-              </li>
-              <li className="mobile-show logout-item">
-                <span className="menu-links" onClick={handleSignIn}>
-                  {isLoggedIn() ? <span>Logout</span> : <FiUser />}
-                </span>
-              </li>
+          <nav className="navigation tn-navbar__nav" aria-label="Primary">
+            <ul className="menu tn-navbar__menu">
+              {nav_links.map(({ url, title }) => (
+                <li key={url}>
+                  <NavLink to={url} className={navLinkClass} end={url === "/"}>
+                    {title}
+                  </NavLink>
+                </li>
+              ))}
             </ul>
-          </div>
+          </nav>
 
-          <div className="nav-icons">
-            <span
-              className="search-icon"
-              onClick={() => {
-                setShowSearch(true);
-              }}
+          <div className="nav-icons tn-navbar__actions">
+            <button
+              type="button"
+              className="tn-navbar__icon-btn search-icon"
+              onClick={() => setShowSearch(true)}
+              aria-label="Open search"
             >
-              <TbSearch />
-            </span>
-            <span className="sign-in-icon mobile-hide" onClick={handleSignIn}>
-              {isLoggedIn() ? <span>Logout</span> : <FiUser />}
-            </span>
+              <TbSearch aria-hidden />
+            </button>
+
             {loggedIn && (
               <Link
                 to="/orders"
-                className="mobile-hide"
-                style={{
-                  color: 'inherit',
-                  textDecoration: 'none',
-                  fontSize: 22,
-                  marginRight: 8,
-                  marginTop: 2
-                }}
+                className="tn-navbar__icon-btn tn-navbar__text-link mobile-hide"
+                aria-label="View orders"
               >
-                Orders
+                <FiPackage aria-hidden />
+                <span className="tn-navbar__text-link-label">Orders</span>
               </Link>
             )}
-            <span
-              onClick={() => navigate('/cart')}
-              className="cart-icon mobile-hide"
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && navigate('/cart')}
+
+            <button
+              type="button"
+              className="tn-navbar__icon-btn cart-icon mobile-hide"
+              onClick={() => navigate("/cart")}
+              aria-label={`Shopping cart${cartCount ? `, ${cartCount} items` : ""}`}
             >
-              <BsCart />
-              {!!cartCount && <span className="cart-num">{cartCount}</span>}
-            </span>
-            <div className="grid-icon">
-              <span onClick={handleClick}>
-                {clicked ? <FaTimes /> : <FiGrid />}
-              </span>
-            </div>
-            {isAdmin && isLoggedIn() && (
-              <Link 
-                to="/dashboard" 
-                className="mobile-hide"
-                style={{
-                  padding: '8px 16px',
-                  backgroundColor: '#4CAF50',
-                  color: 'white',
-                  textDecoration: 'none',
-                  borderRadius: '4px',
-                  marginLeft: '16px',
-                  transition: 'background-color 0.3s'
-                }}
-                onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#4CAF50'}
-              >
+              <BsCart aria-hidden />
+              {!!cartCount && (
+                <span className="cart-num tn-navbar__badge" aria-hidden>
+                  {cartCount > 99 ? "99+" : cartCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="tn-navbar__icon-btn sign-in-icon mobile-hide"
+              onClick={handleSignIn}
+              aria-label={authed ? "Log out" : "Sign in"}
+            >
+              {authed ? (
+                <>
+                  <FiLogOut aria-hidden />
+                  <span className="sign-in-text">Logout</span>
+                </>
+              ) : (
+                <FiUser aria-hidden />
+              )}
+            </button>
+
+            {isAdmin && authed && (
+              <Link to="/dashboard" className="tn-navbar__dashboard mobile-hide">
                 Dashboard
               </Link>
             )}
+
+            <button
+              type="button"
+              className="tn-navbar__icon-btn grid-icon"
+              onClick={handleClick}
+              aria-label={clicked ? "Close menu" : "Open menu"}
+              aria-expanded={clicked}
+              aria-controls="tn-mobile-drawer"
+            >
+              {clicked ? <FaTimes aria-hidden /> : <FiMenu aria-hidden />}
+            </button>
           </div>
         </div>
+      </header>
+
+      <div
+        className={`tn-navbar__drawer-root${clicked ? " tn-navbar__drawer-root--open" : ""}`}
+        aria-hidden={!clicked}
+      >
+        <button
+          type="button"
+          className="tn-navbar__backdrop"
+          onClick={closeDrawer}
+          aria-label="Close menu"
+          tabIndex={clicked ? 0 : -1}
+        />
+        <aside
+          id="tn-mobile-drawer"
+          className={`menu tn-navbar__drawer${clicked ? " open" : ""}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Mobile navigation"
+        >
+          <div className="tn-navbar__drawer-header">
+            <span className="tn-navbar__drawer-title">Menu</span>
+            <button
+              type="button"
+              className="tn-navbar__icon-btn"
+              onClick={closeDrawer}
+              aria-label="Close menu"
+            >
+              <FaTimes aria-hidden />
+            </button>
+          </div>
+
+          <ul className="tn-navbar__drawer-list">
+            {nav_links.map(({ url, title }) => (
+              <li key={`drawer-${url}`}>
+                <NavLink
+                  to={url}
+                  className={navLinkClass}
+                  end={url === "/"}
+                  onClick={closeDrawer}
+                >
+                  {title}
+                </NavLink>
+              </li>
+            ))}
+
+            <li className="mobile-show">
+              <Link to="/orders" className="menu-links mobile-show" onClick={closeDrawer}>
+                Orders
+              </Link>
+            </li>
+
+            <li
+              className="mobile-show tn-navbar__drawer-cart"
+              onClick={() => {
+                closeDrawer();
+                navigate("/cart");
+              }}
+              onKeyDown={(e) => e.key === "Enter" && navigate("/cart")}
+              role="button"
+              tabIndex={0}
+            >
+              <BsCart aria-hidden />
+              <span>Cart</span>
+              {!!cartCount && <span className="tn-navbar__drawer-badge">{cartCount}</span>}
+            </li>
+
+            {isAdmin && authed && (
+              <li className="mobile-show">
+                <Link
+                  to="/dashboard"
+                  className="tn-navbar__dashboard tn-navbar__dashboard--drawer"
+                  onClick={closeDrawer}
+                >
+                  Dashboard
+                </Link>
+              </li>
+            )}
+
+            <li className="mobile-show logout-item">
+              <button
+                type="button"
+                className="tn-navbar__drawer-auth"
+                onClick={handleSignIn}
+              >
+                {authed ? (
+                  <>
+                    <FiLogOut aria-hidden />
+                    <span>Logout</span>
+                  </>
+                ) : (
+                  <>
+                    <FiUser aria-hidden />
+                    <span>Sign in</span>
+                  </>
+                )}
+              </button>
+            </li>
+          </ul>
+        </aside>
       </div>
+
       {showSearch && <Search setShowSearch={setShowSearch} />}
     </>
   );
