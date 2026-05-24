@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import './AIAssistant.css';
-import { FiSend, FiX, FiMessageCircle, FiExternalLink } from 'react-icons/fi';
+import { FiSend, FiX, FiMessageCircle, FiExternalLink, FiUser, FiCpu } from 'react-icons/fi';
 import { BiLoader } from 'react-icons/bi';
 
 const productPagePath = (productId) =>
@@ -80,7 +80,7 @@ const AIAssistant = () => {
   const [messages, setMessages] = useState([
     {
       id: 1,
-      text: 'Hello! 👋 I\'m TechNexus AI, your shopping advisor. What are you looking for today?',
+      text: 'Hello! I\'m TechNexus AI, your shopping advisor. What are you looking for today?',
       sender: 'ai',
       timestamp: new Date(),
     },
@@ -183,26 +183,33 @@ const AIAssistant = () => {
         className="ai-assistant-button"
         onClick={() => setIsOpen(!isOpen)}
         title="TechNexus AI Assistant"
+        aria-label="Toggle TechNexus AI Assistant workspace"
+        aria-expanded={isOpen}
       >
-        <FiMessageCircle size={24} />
-        <span className="ai-assistant-badge">AI</span>
+        <FiMessageCircle size={18} aria-hidden="true" />
+        <span className="ai-assistant-badge">ASK AI</span>
       </button>
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="ai-assistant-container">
+        <div 
+          className="ai-assistant-container"
+          role="dialog"
+          aria-label="TechNexus AI Advisor Workspace"
+        >
           {/* Header */}
           <div className="ai-assistant-header">
             <div className="ai-assistant-title">
-              <FiMessageCircle size={20} />
+              <FiCpu size={16} aria-hidden="true" />
               <span>TechNexus AI Assistant</span>
             </div>
             <button
               className="ai-close-button"
               onClick={() => setIsOpen(false)}
               title="Close"
+              aria-label="Close AI workspace"
             >
-              <FiX size={20} />
+              <FiX size={16} aria-hidden="true" />
             </button>
           </div>
 
@@ -210,14 +217,15 @@ const AIAssistant = () => {
           <div className="ai-assistant-messages">
             {messages.length <= 1 && (
               <div className="ai-quick-queries">
-                <p className="ai-quick-title">Quick queries:</p>
+                <p className="ai-quick-title">SUGGESTIONS</p>
                 {quickQueries.map((query, idx) => (
                   <button
                     key={idx}
                     className="ai-quick-button"
                     onClick={() => handleQuickQuery(query)}
+                    aria-label={`Ask quick question: ${query}`}
                   >
-                    {query}
+                    <span>{query}</span>
                   </button>
                 ))}
               </div>
@@ -230,8 +238,12 @@ const AIAssistant = () => {
                   message.isError ? 'error' : ''
                 } ${message.isRecommendation ? 'recommendation' : ''}`}
               >
-                <div className="ai-message-avatar">
-                  {message.sender === 'ai' ? '🤖' : '👤'}
+                <div className="ai-message-avatar" aria-hidden="true">
+                  {message.sender === 'ai' ? (
+                    <FiCpu size={14} />
+                  ) : (
+                    <FiUser size={14} />
+                  )}
                 </div>
                 <div className="ai-message-content">
                   {message.isRecommendation && message.recommendationData ? (
@@ -243,6 +255,7 @@ const AIAssistant = () => {
                     {message.timestamp.toLocaleTimeString([], {
                       hour: '2-digit',
                       minute: '2-digit',
+                      hour12: true
                     })}
                   </span>
                 </div>
@@ -251,10 +264,12 @@ const AIAssistant = () => {
 
             {isLoading && (
               <div className="ai-message ai">
-                <div className="ai-message-avatar">🤖</div>
+                <div className="ai-message-avatar" aria-hidden="true">
+                  <FiCpu size={14} />
+                </div>
                 <div className="ai-message-content">
                   <div className="ai-loading">
-                    <BiLoader className="ai-spinner" />
+                    <BiLoader className="ai-spinner" aria-hidden="true" />
                     <span>Thinking...</span>
                   </div>
                 </div>
@@ -265,28 +280,30 @@ const AIAssistant = () => {
           </div>
 
           {/* Input Form */}
-          <form className="ai-assistant-input" onSubmit={handleSendMessage}>
+          <form className="ai-assistant-input" onSubmit={handleSendMessage} role="search">
             <input
               type="text"
-              placeholder="Ask me about products... (e.g., gaming laptop under ₹70,000)"
+              placeholder="Ask about products, budget, or specifications..."
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               disabled={isLoading}
               className="ai-input-field"
+              aria-label="Ask TechNexus AI a product query"
             />
             <button
               type="submit"
               disabled={isLoading || !inputValue.trim()}
               className="ai-send-button"
-              title="Send"
+              title="Send message"
+              aria-label="Submit query"
             >
-              <FiSend size={18} />
+              <FiSend size={15} aria-hidden="true" />
             </button>
           </form>
 
           {/* Footer */}
           <div className="ai-assistant-footer">
-            <small>Powered by Google Gemini AI 🚀</small>
+            <span>Powered by Gemini AI</span>
           </div>
         </div>
       )}
