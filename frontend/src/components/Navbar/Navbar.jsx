@@ -7,7 +7,7 @@ import { FiGrid } from "react-icons/fi";
 import { BsCart } from "react-icons/bs";
 import { FiUser } from "react-icons/fi"; // Import the user icon
 import "./Navbar.css";
-import { clearAuth, isLoggedIn, getToken, isTokenExpired } from "../../utils/authUtils";
+import { clearAuth, isLoggedIn, getToken, isTokenExpired, AUTH_CHANGED_EVENT } from "../../utils/authUtils";
 
 const nav_links = [
   {
@@ -60,10 +60,12 @@ const Navbar = () => {
 
     window.addEventListener('cartUpdated', updateCartCount);
     window.addEventListener('storage', checkAuthStatus);
+    window.addEventListener(AUTH_CHANGED_EVENT, checkAuthStatus);
 
     return () => {
       window.removeEventListener('cartUpdated', updateCartCount);
       window.removeEventListener('storage', checkAuthStatus);
+      window.removeEventListener(AUTH_CHANGED_EVENT, checkAuthStatus);
     };
   }, []);
 
@@ -96,7 +98,7 @@ const Navbar = () => {
       clearAuth();
       setIsAdmin(false);
       setLoggedIn(false);
-      window.location.reload(); // Force reload to update navbar
+      navigate('/');
     } else {
       if (getToken()) clearAuth();
       navigate('/login');

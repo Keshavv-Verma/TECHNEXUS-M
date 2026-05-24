@@ -1,5 +1,15 @@
 import axios from 'axios';
-import { AuthError, clearAuth } from '../utils/authUtils';
+import { AuthError, clearAuth, getToken } from '../utils/authUtils';
+
+const api = axios.create();
+
+api.interceptors.request.use((config) => {
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
 
 const getApiBase = () => {
   const raw = process.env.REACT_APP_API_URL;
@@ -9,8 +19,8 @@ const getApiBase = () => {
   return raw.replace(/\/+$/, '');
 };
 
-const handleResponse = (promise) => {
-  return promise
+const handleResponse = (promise) =>
+  promise
     .then(res => res.data)
     .catch(err => {
       if (err.response) {
@@ -37,11 +47,10 @@ const handleResponse = (promise) => {
       }
       throw err;
     });
-};
 
 export const getCheckoutConfig = async () => {
   try {
-    return await handleResponse(axios.get(`${getApiBase()}/api/checkout/config`));
+    return await handleResponse(api.get(`${getApiBase()}/api/checkout/config`));
   } catch (err) {
     if (err instanceof AuthError) throw err;
     return {
@@ -55,46 +64,53 @@ export const getCheckoutConfig = async () => {
 };
 
 export const previewCheckout = (payload) =>
-  handleResponse(axios.post(`${getApiBase()}/api/checkout/preview`, payload));
+  handleResponse(api.post(`${getApiBase()}/api/checkout/preview`, payload));
 
 export const validateCoupon = (code, subtotal) =>
-  handleResponse(axios.post(`${getApiBase()}/api/coupons/validate`, { code, subtotal }));
+  handleResponse(api.post(`${getApiBase()}/api/coupons/validate`, { code, subtotal }));
 
 export const getAddresses = () =>
-  handleResponse(axios.get(`${getApiBase()}/api/addresses`));
+  handleResponse(api.get(`${getApiBase()}/api/addresses`));
 
 export const createAddress = (address) =>
-  handleResponse(axios.post(`${getApiBase()}/api/addresses`, address));
+  handleResponse(api.post(`${getApiBase()}/api/addresses`, address));
 
 export const updateAddress = (id, address) =>
-  handleResponse(axios.put(`${getApiBase()}/api/addresses/${id}`, address));
+  handleResponse(api.put(`${getApiBase()}/api/addresses/${id}`, address));
 
 export const deleteAddress = (id) =>
-  handleResponse(axios.delete(`${getApiBase()}/api/addresses/${id}`));
+  handleResponse(api.delete(`${getApiBase()}/api/addresses/${id}`));
 
 export const setDefaultAddress = (id) =>
-  handleResponse(axios.patch(`${getApiBase()}/api/addresses/${id}/default`));
+  handleResponse(api.patch(`${getApiBase()}/api/addresses/${id}/default`));
 
 export const placeOrder = (payload) =>
-  handleResponse(axios.post(`${getApiBase()}/api/orders`, payload));
+  handleResponse(api.post(`${getApiBase()}/api/orders`, payload));
 
 export const getOrder = (id) =>
-  handleResponse(axios.get(`${getApiBase()}/api/orders/${id}`));
+  handleResponse(api.get(`${getApiBase()}/api/orders/${id}`));
 
 export const getOrderByNumber = (orderNumber) =>
-  handleResponse(axios.get(`${getApiBase()}/api/orders/track/${orderNumber}`));
+  handleResponse(api.get(`${getApiBase()}/api/orders/track/${orderNumber}`));
 
 export const getMyOrders = () =>
-  handleResponse(axios.get(`${getApiBase()}/api/orders`));
+  handleResponse(api.get(`${getApiBase()}/api/orders`));
 
 export const getAdminOrders = () =>
-  handleResponse(axios.get(`${getApiBase()}/api/admin/orders`));
+  handleResponse(api.get(`${getApiBase()}/api/admin/orders`));
 
 export const markOrderReceived = (orderId) =>
-  handleResponse(axios.patch(`${getApiBase()}/api/orders/${orderId}/received`));
+  handleResponse(api.patch(`${getApiBase()}/api/orders/${orderId}/received`));
 
 export const createStripeCheckoutSession = (amount, { customerEmail, successUrl, cancelUrl } = {}) =>
-  handleResponse(axios.post(`${getApiBase()}/api/payments/stripe/create-checkout-session`, { amount, customerEmail, successUrl, cancelUrl }));
+  handleResponse(
+    api.post(`${getApiBase()}/api/payments/stripe/create-checkout-session`, {
+      amount,
+      customerEmail,
+      successUrl,
+      cancelUrl,
+    })
+  );
 
 export const verifyStripeSession = (sessionId) =>
-  handleResponse(axios.post(`${getApiBase()}/api/payments/stripe/verify-session`, { sessionId }));
+  handleResponse(api.post(`${getApiBase()}/api/payments/stripe/verify-session`, { sessionId }));

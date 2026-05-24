@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { clearAuth } from '../../utils/authUtils';
+import { clearAuth, persistAuth } from '../../utils/authUtils';
 import { joinApiUrl } from '../../services/api';
 import './AuthForm.css';
 import { FiUser, FiMail, FiLock } from 'react-icons/fi';
@@ -51,18 +51,21 @@ const AuthForm = () => {
 
       if (response.ok) {
         if (isLogin) {
+          if (!data.token) {
+            alert(data.error || 'Login succeeded but no token was returned. Check backend JWT_SECRET.');
+            return;
+          }
           clearAuth();
-          localStorage.setItem('token', data.token);
-          if (data.refreshToken) localStorage.setItem('refreshToken', data.refreshToken);
-          localStorage.setItem('isAdmin', String(data.isAdmin));
-          if (data.userId) localStorage.setItem('userId', data.userId);
-          localStorage.setItem('currentUser', JSON.stringify({
-            username: formData.email,
+          persistAuth({
+            token: data.token,
+            refreshToken: data.refreshToken,
+            isAdmin: data.isAdmin,
             userId: data.userId,
-          }));
+            email: formData.email,
+          });
           clearForm();
-          navigate(redirectPath);
-          window.location.reload(); // Force reload to update navbar
+          const target = redirectPath.startsWith('/') ? redirectPath : `/${redirectPath}`;
+          window.location.assign(target);
         } else {
           clearForm();
           setIsLogin(true);

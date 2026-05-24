@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { clearAuth } from "../utils/authUtils";
+import { clearAuth, getToken, persistAuth } from "../utils/authUtils";
 import { joinApiUrl } from "../services/api";
 
 export const Context = createContext();
@@ -17,7 +17,7 @@ const AppContext = ({ children }) => {
   useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use(
       (config) => {
-        const token = localStorage.getItem("token");
+        const token = getToken();
         if (token) {
           config.headers["Authorization"] = `Bearer ${token}`;
         }
@@ -46,11 +46,12 @@ const AppContext = ({ children }) => {
               );
               if (response.status === 200 || response.status === 201) {
                 const { token: newToken, refreshToken: newRefreshToken } = response.data;
-                localStorage.setItem("token", newToken);
-                if (newRefreshToken) {
-                  localStorage.setItem("refreshToken", newRefreshToken);
-                }
-                // Retry original request with the new access token
+                persistAuth({
+                  token: newToken,
+                  refreshToken: newRefreshToken,
+                  isAdmin: localStorage.getItem("isAdmin") === "true",
+                  userId: localStorage.getItem("userId"),
+                });
                 originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
                 return axios(originalRequest);
               }
