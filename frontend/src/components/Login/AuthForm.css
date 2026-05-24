@@ -1,157 +1,220 @@
+/* ==========================================================================
+   TechNexus Premium Authentication Form Styles (Graphite/SaaS Aesthetic)
+   ========================================================================== */
+
 .auth-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-  padding: 20px;
+  background: radial-gradient(circle at center, #15161c 0%, #07090f 100%);
+  padding: 24px;
+  font-family: "Outfit", "Segoe UI", sans-serif;
 }
 
 .auth-form-container {
   display: flex;
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
+  background: rgba(13, 14, 18, 0.45);
+  border-radius: 16px;
   overflow: hidden;
   width: 100%;
-  max-width: 900px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  max-width: 880px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* ─── Elegant Left Panel ─── */
 .auth-left-panel {
-  background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-  padding: 40px;
-  color: white;
-  flex: 1;
+  background: linear-gradient(135deg, #16171d 0%, #0a0b0f 100%);
+  padding: 48px;
+  color: #ffffff;
+  flex: 1.1;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
 }
 
+/* Metallic gradient effect for left panel logo */
 .auth-left-panel h1 {
-  font-size: 2.5rem;
-  margin-bottom: 20px;
+  font-family: "Outfit", "Montserrat", sans-serif;
+  font-size: 2.8rem;
+  margin-bottom: 12px;
   font-weight: 700;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #ffffff 40%, #888888 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
 }
 
 .auth-left-panel p {
-  font-size: 1.2rem;
-  opacity: 0.9;
+  font-size: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.8;
+  margin: 0;
 }
 
+/* ─── Right Panel Form Area ─── */
 .auth-right-panel {
   flex: 1;
-  padding: 40px;
+  padding: 48px;
+  background: rgba(13, 14, 18, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .auth-form {
-  max-width: 400px;
+  width: 100%;
+  max-width: 340px;
   margin: 0 auto;
 }
 
 .auth-form h2 {
-  color: white;
-  text-align: center;
-  margin-bottom: 30px;
-  font-size: 1.8rem;
+  color: #ffffff;
+  text-align: left;
+  margin-bottom: 28px;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .auth-form .form-group {
   position: relative;
-  margin-bottom: 20px;
-  animation: fadeIn 0.5s ease forwards;
+  margin-bottom: 16px;
+  animation: fadeInForm 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .auth-form .input-icon {
   position: absolute;
-  left: 15px;
+  left: 14px;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.35);
   z-index: 1;
   pointer-events: none;
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  transition: color 0.3s;
 }
 
 .auth-form .form-group input {
   width: 100%;
-  padding: 15px 15px 15px 50px;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  position: relative;
-}
-
-.auth-form .form-group input:focus {
-  border-color: #4CAF50;
+  padding: 12px 14px 12px 42px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-family: inherit;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .auth-form .form-group input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(255, 255, 255, 0.35);
 }
 
+.auth-form .form-group input:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.02);
+}
+
+.auth-form .form-group input:focus + .input-icon {
+  color: #ffffff;
+}
+
+/* Premium Solid White Button */
 .auth-button {
   width: 100%;
-  padding: 15px;
-  background: #4CAF50;
-  color: white;
+  padding: 12px;
+  background: #ffffff;
+  color: #07090f;
   border: none;
-  border-radius: 12px;
-  font-size: 1rem;
+  border-radius: 8px;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 20px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-top: 24px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .auth-button:hover {
-  background: #45a049;
-  transform: translateY(-2px);
+  background: #e5e7eb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.auth-button:active {
+  transform: translateY(0);
 }
 
 .auth-switch {
-  color: white;
+  color: rgba(255, 255, 255, 0.5);
   text-align: center;
   margin-top: 20px;
   cursor: pointer;
-  transition: color 0.3s;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: color 0.2s ease;
+  user-select: none;
 }
 
 .auth-switch:hover {
-  color: #4CAF50;
+  color: #ffffff;
 }
 
+/* ─── Responsive & Safe Areas ─── */
 @media (max-width: 768px) {
   .auth-form-container {
     flex-direction: column;
+    max-width: 440px;
   }
 
   .auth-left-panel {
-    padding: 30px;
+    padding: 36px;
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .auth-left-panel h1 {
+    font-size: 2.2rem;
   }
 
   .auth-right-panel {
-    padding: 30px;
+    padding: 36px;
   }
 }
 
-@keyframes fadeIn {
+@keyframes fadeInForm {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-form-container,
+  .auth-form .form-group input,
+  .auth-button,
+  .auth-switch {
+    transition: none !important;
+    animation: none !important;
   }
 }
