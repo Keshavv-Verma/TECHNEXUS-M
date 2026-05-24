@@ -8,8 +8,16 @@ const logger = require('../utils/logger');
  */
 const getAllProducts = async (req, res, next) => {
   try {
-    const { search, category, populate } = req.query;
-    let query = Product.find();
+    const { search, category, categoryId, excludeId, limit, populate } = req.query;
+    let query = Product.find({ isActive: { $ne: false } });
+
+    if (categoryId) {
+      query = query.where('categoryId').equals(categoryId);
+    }
+
+    if (excludeId) {
+      query = query.where('_id').ne(excludeId);
+    }
 
     // Filter by category
     if (category) {
@@ -41,6 +49,10 @@ const getAllProducts = async (req, res, next) => {
         path: 'categoryId',
         select: 'name description',
       });
+    }
+
+    if (limit) {
+      query = query.limit(parseInt(limit, 10));
     }
 
     const products = await query.exec();
@@ -242,23 +254,10 @@ const deleteProduct = async (req, res, next) => {
  */
 const getCategories = async (req, res, next) => {
   try {
-    const { populate: category } = req.query;
-    if (!category) {
-      const products = await Product.find().populate('categoryId');
-      return res.json(products);
-    }
-    if (category) {
-      const products = await Product.find({
-        categoryId: {
-          $in: await Category.find({
-            name: { $regex: category.toUpperCase(), $options: 'i' },
-          }).select('_id'),
-        },
-      }).populate('categoryId');
-      return res.json(products);
-    }
+    const categories = await Category.find().sort({ name: 1 });
+    res.json(categories);
   } catch (error) {
-    logger.error('Error fetching products', error.message);
+    logger.error('Error fetching categories', error.message);
     next(error);
   }
 };

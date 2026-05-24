@@ -10,9 +10,7 @@ const Category = () => {
     const { setstate } = useContext(Context);
 
     const { id } = useParams();
-    const { data } = useFetch(
-        `/api/products?populate=*&[filters][categories][id]=${id}`
-    );
+    const { data } = useFetch(`/api/products?categoryId=${id}`);
     console.log("categroy",data);
         
     

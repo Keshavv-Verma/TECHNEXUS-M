@@ -31,7 +31,7 @@ function SingleProduct() {
   };
 
   const { id } = useParams();
-  const { data } = useFetch(`/api/products?populate=*&[filters][id]=${id}`);
+  const { data } = useFetch(`/api/products/${id}`);
 
   const { handleAddToCart } = useContext(Context);
 

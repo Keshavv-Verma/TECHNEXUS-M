@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { clearAuth } from '../../utils/authUtils';
+import { joinApiUrl } from '../../services/api';
 import './AuthForm.css';
 import { FiUser, FiMail, FiLock } from 'react-icons/fi';
 
@@ -36,7 +37,7 @@ const AuthForm = () => {
         return;
       }
 
-      const apiUrl = `${process.env.REACT_APP_API_URL}/api/${isLogin ? 'login' : 'signup'}`;
+      const apiUrl = joinApiUrl(`/api/${isLogin ? 'login' : 'signup'}`);
 
       const response = await fetch(apiUrl, {
         method: 'POST',

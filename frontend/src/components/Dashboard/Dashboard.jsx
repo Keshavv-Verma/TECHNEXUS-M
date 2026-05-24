@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAdminOrders } from '../../services/checkoutService';
+import { joinApiUrl } from '../../services/api';
 import './Dashboard.css';
 
 const formatOrderDate = (d) =>
@@ -40,7 +41,7 @@ const Dashboard = () => {
 
   const fetchProducts = useCallback(async () => {
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products`, {
+      const response = await fetch(joinApiUrl('/api/products'), {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -85,7 +86,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products`, {
+      const response = await fetch(joinApiUrl('/api/products'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -158,7 +159,7 @@ const Dashboard = () => {
     }
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products/${productId}`, {
+      const response = await fetch(joinApiUrl(`/api/products/${productId}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -218,7 +219,7 @@ const Dashboard = () => {
     setSuccess(null);
 
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products/${productId}`, {
+      const response = await fetch(joinApiUrl(`/api/products/${productId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

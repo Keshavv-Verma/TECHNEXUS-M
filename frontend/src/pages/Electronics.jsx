@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { joinApiUrl } from '../services/api';
 
 export default function Electronics() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export default function Electronics() {
     const adminStatus = localStorage.getItem('isAdmin') === 'true';
     setIsAdmin(adminStatus);
 
-    fetch(`${process.env.REACT_APP_API_URL}/api/products/category/ELECTRONICS`)
+    fetch(joinApiUrl('/api/products/category/ELECTRONICS'))
       .then(response => {
         console.log('Response status:', response.status);
         return response.json();
@@ -37,7 +38,7 @@ export default function Electronics() {
     if (window.confirm('Are you sure you want to delete this product?')) {
       try {
         const activeToken = localStorage.getItem('token');
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products/${productId}`, {
+        const response = await fetch(joinApiUrl(`/api/products/${productId}`), {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${activeToken}`

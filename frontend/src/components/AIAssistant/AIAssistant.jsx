@@ -88,7 +88,7 @@ const AIAssistant = () => {
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef(null);
-  const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
   // Auto-scroll to latest message
   useEffect(() => {

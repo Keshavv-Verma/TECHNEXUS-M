@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { IoClose, IoSearch } from 'react-icons/io5'
 import './Search.css'
 import { useNavigate } from 'react-router-dom'
+import { joinApiUrl } from '../../services/api'
 
 const Search = ({setShowSearch}) => {
 
@@ -19,7 +20,7 @@ const Search = ({setShowSearch}) => {
   useEffect(() => {
     if (query.length > 0) {
       console.log('Searching for:', query);
-      fetch(`${process.env.REACT_APP_API_URL}/api/products`)
+      fetch(joinApiUrl('/api/products'))
         .then(res => res.json())
         .then(data => {
           console.log('API response:', data);

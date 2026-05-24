@@ -2,6 +2,7 @@ import { createContext, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { clearAuth } from "../utils/authUtils";
+import { joinApiUrl } from "../services/api";
 
 export const Context = createContext();
 
@@ -40,7 +41,7 @@ const AppContext = ({ children }) => {
             try {
               // Create a raw request to refresh token (avoids infinite loop)
               const response = await axios.post(
-                `${process.env.REACT_APP_API_URL}/api/refresh-token`,
+                joinApiUrl('/api/refresh-token'),
                 { refreshToken }
               );
               if (response.status === 200 || response.status === 201) {

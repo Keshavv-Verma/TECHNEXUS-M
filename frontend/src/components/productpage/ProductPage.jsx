@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiShare2, FiCheckCircle, FiTruck } from 'react-icons/fi';
 import { loadCart, saveCart, normalizeCartItem, getProductId } from '../../utils/cartUtils';
+import { joinApiUrl } from '../../services/api';
 import './productpage.css';
 
 const ProductPage = () => {
@@ -15,7 +16,7 @@ const ProductPage = () => {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/products/${id}`);
+        const response = await fetch(joinApiUrl(`/api/products/${id}`));
         if (!response.ok) throw new Error('Product not found');
         const data = await response.json();
         setProduct(data);
