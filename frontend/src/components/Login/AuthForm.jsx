@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import { clearAuth, persistAuth } from '../../utils/authUtils';
 import { joinApiUrl } from '../../services/api';
 import './AuthForm.css';
@@ -12,7 +12,6 @@ const AuthForm = () => {
     password: '',
     name: ''
   });
-  const navigate = useNavigate();
   const location = useLocation();
   const redirectPath = location.state?.redirect || '/';
 
