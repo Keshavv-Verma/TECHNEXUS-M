@@ -36,14 +36,28 @@ export const notifyAuthChange = () => {
   window.dispatchEvent(new Event(AUTH_CHANGED_EVENT));
 };
 
+export const decodeJwtPayload = (token) => {
+  if (!token || typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+
+  const base64Url = parts[1];
+  const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
+  return JSON.parse(atob(padded));
+};
+
 export const isTokenExpired = (token) => {
   if (!token) return true;
   try {
-    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
-    if (!payload.exp) return false;
-    return payload.exp * 1000 < Date.now();
+    const payload = decodeJwtPayload(token);
+    if (!payload?.exp) return false;
+    // Small clock skew buffer so fresh tokens are not cleared immediately
+    const skewMs = 30_000;
+    return payload.exp * 1000 < Date.now() - skewMs;
   } catch {
-    return true;
+    // If decode fails, do not wipe auth client-side — let the API validate
+    return false;
   }
 };
 

@@ -97,6 +97,7 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
     if (token && isTokenExpired(token)) {
       clearAuth();
       setSessionExpired(true);
+      return;
     }
   }, []);
 

@@ -71,7 +71,7 @@ const login = async (req, res, next) => {
 
     // Generate JWT token
     const token = jwt.sign(
-      { userId: user._id, isAdmin: user.isAdmin, email: user.email },
+      { userId: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
       config.jwt.secret,
       { expiresIn: config.jwt.expiresIn }
     );
@@ -106,7 +106,7 @@ const login = async (req, res, next) => {
       token,
       refreshToken,
       isAdmin: user.isAdmin,
-      userId: user._id,
+      userId: user._id.toString(),
       message: 'Login successful',
     });
   } catch (error) {

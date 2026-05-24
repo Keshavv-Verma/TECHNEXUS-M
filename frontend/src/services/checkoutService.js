@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AuthError, clearAuth, getToken } from '../utils/authUtils';
+import { AuthError, getToken } from '../utils/authUtils';
 
 const api = axios.create();
 
@@ -26,7 +26,6 @@ const handleResponse = (promise) =>
       if (err.response) {
         const data = err.response.data || {};
         if (err.response.status === 401) {
-          clearAuth();
           throw new AuthError(
             data.error === 'No token provided'
               ? 'Please sign in to continue checkout.'

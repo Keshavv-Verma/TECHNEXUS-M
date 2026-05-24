@@ -5,14 +5,14 @@ const DEFAULT_CATEGORY_IMAGE =
 
 /** Avoid https://host//api/... when REACT_APP_API_URL has a trailing slash */
 export const getApiBaseUrl = () => {
-  const raw = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const raw = (process.env.REACT_APP_API_URL || 'http://localhost:5000').trim();
   return raw.replace(/\/+$/, '');
 };
 
-export const joinApiUrl = (path) => {
+export const joinApiUrl = (path = '') => {
   const base = getApiBaseUrl();
-  const normalizedPath = path.startsWith('/') ? path : `/${path}`;
-  return `${base}${normalizedPath}`;
+  const normalizedPath = `/${String(path).replace(/^\/+/, '')}`;
+  return `${base}${normalizedPath}`.replace(/([^:]\/)\/+/g, '$1');
 };
 
 const toStrapiMedia = (url) => ({

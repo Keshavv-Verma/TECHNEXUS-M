@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Electronics from './pages/Electronics';
@@ -9,7 +10,6 @@ import Category from './components/Category/Category';
 import SingleProduct from './components/SingleProduct/SingleProduct';
 import AppContext from "./context/AppContext";
 import { useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
 import SuccessPage from './components/SuccessPage/SuccessPage';
 import ProductPage from './components/productpage/ProductPage';
 import AuthForm from './components/Login/AuthForm';
@@ -21,15 +21,6 @@ import TrackOrder from './pages/TrackOrder';
 import AIAssistant from './components/AIAssistant/AIAssistant';
 
 function App() {
-  useEffect(() => {
-    const hasAlertBeenShown = localStorage.getItem('alertShown');
-
-    if (!hasAlertBeenShown) {
-      alert('This project is only for project purpose so i am using free plan of strapi for backend that could fetch data slow please wait for it or refresh after 30 to 40s...');
-      localStorage.setItem('alertShown', 'true');
-    }
-  }, []);
-
   const ScrollToTop = () => {
     const { pathname } = useLocation();
   

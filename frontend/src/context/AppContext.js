@@ -29,17 +29,20 @@ const AppContext = ({ children }) => {
     const responseInterceptor = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
-        const originalRequest = error.config;
+        const originalRequest = error.config || {};
+        const hadAuthHeader = Boolean(originalRequest.headers?.Authorization);
+
         if (
-          error.response &&
-          error.response.status === 401 &&
-          !originalRequest._retry
+          error.response?.status === 401 &&
+          hadAuthHeader &&
+          !originalRequest._retry &&
+          !originalRequest.url?.includes('/api/login') &&
+          !originalRequest.url?.includes('/api/refresh-token')
         ) {
           originalRequest._retry = true;
-          const refreshToken = localStorage.getItem("refreshToken");
+          const refreshToken = localStorage.getItem('refreshToken');
           if (refreshToken) {
             try {
-              // Create a raw request to refresh token (avoids infinite loop)
               const response = await axios.post(
                 joinApiUrl('/api/refresh-token'),
                 { refreshToken }
@@ -49,20 +52,18 @@ const AppContext = ({ children }) => {
                 persistAuth({
                   token: newToken,
                   refreshToken: newRefreshToken,
-                  isAdmin: localStorage.getItem("isAdmin") === "true",
-                  userId: localStorage.getItem("userId"),
+                  isAdmin: localStorage.getItem('isAdmin') === 'true',
+                  userId: localStorage.getItem('userId'),
                 });
-                originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
                 return axios(originalRequest);
               }
             } catch (refreshError) {
-              console.error("Token refresh failed:", refreshError);
+              console.error('Token refresh failed:', refreshError);
               clearAuth();
-              window.location.href = "/login";
             }
           } else {
             clearAuth();
-            window.location.href = "/login";
           }
         }
         return Promise.reject(error);
