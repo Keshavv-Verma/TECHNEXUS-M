@@ -61,32 +61,43 @@ const ProductPage = () => {
   if (loading) {
     return (
       <div className="loading-container">
-        <div className="loading-spinner"></div>
-        <p>Loading amazing product...</p>
+        <div className="loading-spinner" aria-hidden="true"></div>
+        <p>Loading Curated Device...</p>
       </div>
     );
   }
 
   if (error) {
-    return <div className="error-container">{error}</div>;
+    return <div className="error-container">Curation Error: {error}</div>;
   }
 
   if (!product) {
-    return <div className="error-container">Product not found</div>;
+    return <div className="error-container">Curation Not Found</div>;
   }
 
   return (
-    <div className="product-page-container">
+    <div className="product-page-container" role="main">
       <div className="product-glass-container">
         <div className="product-image-section">
           <div className="main-image-container">
             <img src={product.image} alt={product.name} className="main-product-image" />
             <div className="image-overlay">
-              <button className="overlay-btn wishlist-btn">
-                <FiHeart />
+              <button 
+                className="overlay-btn wishlist-btn" 
+                onClick={() => alert(`"${product.name}" added to your curated wishlist.`)}
+                aria-label="Add product to wishlist"
+              >
+                <FiHeart aria-hidden="true" />
               </button>
-              <button className="overlay-btn share-btn">
-                <FiShare2 />
+              <button 
+                className="overlay-btn share-btn"
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert('Curated product link copied to clipboard.');
+                }}
+                aria-label="Share product curation"
+              >
+                <FiShare2 aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -94,38 +105,40 @@ const ProductPage = () => {
 
         <div className="product-info-section">
           <div className="product-header">
+            <span className="product-category" aria-label={`Category: ${product.category?.name || product.categoryId?.name || 'Uncategorized'}`}>
+              {product.category?.name || product.categoryId?.name || 'Curated Catalog'}
+            </span>
             <h1>{product.name}</h1>
             <div className="product-meta">
-              <div className="rating-container">
+              <div className="rating-container" aria-label={`Rating: ${product.rating} stars out of 5`}>
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <span key={i} className={`star ${i < product.rating ? 'filled' : ''}`}>
+                  <span key={i} className={`star ${i < Math.round(product.rating || 4) ? 'filled' : ''}`} aria-hidden="true">
                     ★
                   </span>
                 ))}
-                <span className="rating-count">({product.rating} / 5)</span>
+                <span className="rating-count">({product.rating || "4.5"} / 5)</span>
               </div>
-              <span className="product-category">{product.category?.name || product.categoryId?.name || 'Uncategorized'}</span>
             </div>
           </div>
 
           <div className="price-section">
             <h2 className="price">₹{product.price.toLocaleString('en-IN')}</h2>
-            <span className="tax-info">Inclusive of all taxes</span>
+            <span className="tax-info">Inclusive of all local duties & taxes</span>
           </div>
 
           <div className="product-description">
-            <h3>Product Description</h3>
+            <h3>Curator Specifications</h3>
             <p>{product.description}</p>
           </div>
 
           <div className="product-features">
             <div className="feature-item">
-              <FiCheckCircle />
-              <span>Genuine Product</span>
+              <FiCheckCircle aria-hidden="true" />
+              <span>Genuine Integrity</span>
             </div>
             <div className="feature-item">
-              <FiTruck />
-              <span>Fast Delivery</span>
+              <FiTruck aria-hidden="true" />
+              <span>Priority Transport</span>
             </div>
           </div>
 
@@ -133,11 +146,16 @@ const ProductPage = () => {
             <button
               className={`add-to-cart-btn ${isAdded ? 'added' : ''}`}
               onClick={handleAddToCart}
+              aria-label={isAdded ? "Added to cart successfully" : "Add curated device to shopping cart"}
             >
-              <FiShoppingCart />
+              <FiShoppingCart aria-hidden="true" />
               {isAdded ? 'Added to Cart' : 'Add to Cart'}
             </button>
-            <button className="buy-now-btn" onClick={handleBuyNow}>
+            <button 
+              className="buy-now-btn" 
+              onClick={handleBuyNow}
+              aria-label="Buy curated device now"
+            >
               Buy Now
             </button>
           </div>

@@ -1,13 +1,22 @@
-const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const config = require('../config');
 const logger = require('../utils/logger');
-const { signupSchema, loginSchema } = require('../utils/validationSchemas');
+const { 
+  signupSchema, 
+  loginSchema, 
+  changePasswordSchema, 
+  resetPasswordSchema 
+} = require('../utils/validationSchemas');
+const { 
+  hashPassword, 
+  comparePassword, 
+  isArgon2Hash 
+} = require('../utils/passwordUtils');
 
 /**
  * POST /api/signup
- * Register a new user
+ * Register a new user with Argon2id hashing
  */
 const signup = async (req, res, next) => {
   try {
@@ -17,8 +26,8 @@ const signup = async (req, res, next) => {
       return res.status(400).json({ error: error.details[0].message });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(value.password, 10);
+    // Hash password with Argon2id
+    const hashedPassword = await hashPassword(value.password);
 
     const user = await User.create({
       name: value.name,
@@ -45,6 +54,7 @@ const signup = async (req, res, next) => {
 /**
  * POST /api/login
  * Authenticate user and return JWT token
+ * Automatically upgrades password hashing to Argon2id transparently
  */
 const login = async (req, res, next) => {
   try {
@@ -63,17 +73,31 @@ const login = async (req, res, next) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    // Validate using fallback compare function (handles both bcrypt and Argon2)
+    const isPasswordValid = await comparePassword(password, user.password);
     
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Generate JWT token
+    // Rolling Migration Check:
+    // If the stored hash is not Argon2, re-hash it using Argon2id and save
+    if (!isArgon2Hash(user.password)) {
+      logger.info('Upgrading password hash to Argon2id dynamically', { userId: user._id.toString() });
+      try {
+        user.password = await hashPassword(password);
+        await user.save();
+      } catch (migrationError) {
+        logger.error('Failed to upgrade legacy bcrypt hash to Argon2id during login', migrationError.message);
+        // Do not block login if saving fails (robust fallback)
+      }
+    }
+
+    // Generate JWT token (hardened JWT options)
     const token = jwt.sign(
       { userId: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: config.jwt.expiresIn, algorithm: 'HS256' }
     );
 
     // Helper to parse duration string to ms
@@ -92,9 +116,9 @@ const login = async (req, res, next) => {
 
     // Generate Refresh token
     const refreshToken = jwt.sign(
-      { userId: user._id },
+      { userId: user._id.toString() },
       config.jwt.secret,
-      { expiresIn: config.jwt.refreshExpiresIn }
+      { expiresIn: config.jwt.refreshExpiresIn, algorithm: 'HS256' }
     );
 
     // Save refresh token to user
@@ -126,10 +150,10 @@ const refreshToken = async (req, res, next) => {
       return res.status(401).json({ error: 'Refresh token is required' });
     }
 
-    // Verify incoming refresh token
+    // Verify incoming refresh token (hardened verification)
     let decoded;
     try {
-      decoded = jwt.verify(incomingToken, config.jwt.secret);
+      decoded = jwt.verify(incomingToken, config.jwt.secret, { algorithms: ['HS256'] });
     } catch (err) {
       return res.status(401).json({ error: 'Invalid or expired refresh token' });
     }
@@ -150,16 +174,16 @@ const refreshToken = async (req, res, next) => {
 
     // Generate new access token
     const newAccessToken = jwt.sign(
-      { userId: user._id, isAdmin: user.isAdmin, email: user.email },
+      { userId: user._id.toString(), isAdmin: user.isAdmin, email: user.email },
       config.jwt.secret,
-      { expiresIn: config.jwt.expiresIn }
+      { expiresIn: config.jwt.expiresIn, algorithm: 'HS256' }
     );
 
     // Rotate refresh token: generate new refresh token
     const newRefreshToken = jwt.sign(
-      { userId: user._id },
+      { userId: user._id.toString() },
       config.jwt.secret,
-      { expiresIn: config.jwt.refreshExpiresIn }
+      { expiresIn: config.jwt.refreshExpiresIn, algorithm: 'HS256' }
     );
 
     // Helper to parse duration string to ms
@@ -204,7 +228,7 @@ const logout = async (req, res, next) => {
       // Find user who owns this token and remove it
       let decoded;
       try {
-        decoded = jwt.verify(incomingToken, config.jwt.secret);
+        decoded = jwt.verify(incomingToken, config.jwt.secret, { algorithms: ['HS256'] });
         const user = await User.findById(decoded.userId);
         if (user) {
           user.refreshTokens = user.refreshTokens.filter((t) => t.token !== incomingToken);
@@ -221,9 +245,78 @@ const logout = async (req, res, next) => {
   }
 };
 
+/**
+ * POST /api/change-password
+ * Change password for the logged-in user
+ */
+const changePassword = async (req, res, next) => {
+  try {
+    // Validate input
+    const { error, value } = changePasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const { oldPassword, newPassword } = value;
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Verify old password
+    const isOldPasswordValid = await comparePassword(oldPassword, user.password);
+    if (!isOldPasswordValid) {
+      return res.status(400).json({ error: 'Invalid current password' });
+    }
+
+    // Hash and save new password
+    user.password = await hashPassword(newPassword);
+    await user.save();
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (error) {
+    logger.error('Change password error', error.message);
+    next(error);
+  }
+};
+
+/**
+ * POST /api/admin/reset-password
+ * Reset password for any user account (Admin only)
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    // Validate input
+    const { error, value } = resetPasswordSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ error: error.details[0].message });
+    }
+
+    const { userId, newPassword } = value;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Hash and save new password
+    user.password = await hashPassword(newPassword);
+    await user.save();
+
+    res.json({ message: 'User password reset successfully' });
+  } catch (error) {
+    logger.error('Admin password reset error', error.message);
+    next(error);
+  }
+};
+
 module.exports = {
   signup,
   login,
   refreshToken,
   logout,
+  changePassword,
+  resetPassword,
 };

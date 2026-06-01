@@ -69,6 +69,20 @@ const placeOrderSchema = Joi.object({
   stripePaymentIntentId: Joi.string().allow('', null).optional(),
 });
 
+const changePasswordSchema = Joi.object({
+  oldPassword: Joi.string().required(),
+  newPassword: Joi.string().required().min(12).max(128).messages({
+    'string.min': 'New password must be at least 12 characters',
+  }),
+});
+
+const resetPasswordSchema = Joi.object({
+  userId: Joi.string().required(),
+  newPassword: Joi.string().required().min(12).max(128).messages({
+    'string.min': 'New password must be at least 12 characters',
+  }),
+});
+
 module.exports = {
   signupSchema,
   loginSchema,
@@ -76,4 +90,7 @@ module.exports = {
   couponValidateSchema,
   checkoutPreviewSchema,
   placeOrderSchema,
+  changePasswordSchema,
+  resetPasswordSchema,
 };
+

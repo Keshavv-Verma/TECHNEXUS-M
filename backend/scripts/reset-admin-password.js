@@ -1,7 +1,7 @@
 require('dotenv').config();
-const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const { User } = require('../models');
+const { hashPassword } = require('../utils/passwordUtils');
 
 // Connect to MongoDB
 const connectDB = async () => {
@@ -19,7 +19,7 @@ const connectDB = async () => {
   }
 };
 
-// Reset or create admin user
+// Reset or create admin user with Argon2id hash
 const resetAdminPassword = async () => {
   try {
     await connectDB();
@@ -34,23 +34,24 @@ const resetAdminPassword = async () => {
     // Check if user exists
     let user = await User.findOne({ email: adminEmail.toLowerCase() });
 
+    // Hash the password with Argon2id
+    const hashedPassword = await hashPassword(newPassword);
+
     if (user) {
       // Update existing user's password
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
       user.password = hashedPassword;
       user.isAdmin = true;
       await user.save();
-      console.log('\n✅ Admin password updated successfully!');
+      console.log('\n✅ Admin password updated successfully using Argon2id!');
     } else {
       // Create new admin user
-      const hashedPassword = await bcrypt.hash(newPassword, 10);
       user = await User.create({
         name: 'Admin',
         email: adminEmail.toLowerCase(),
         password: hashedPassword,
         isAdmin: true,
       });
-      console.log('\n✅ New admin user created successfully!');
+      console.log('\n✅ New admin user created successfully using Argon2id!');
     }
 
     console.log(`\nAdmin Details:`);

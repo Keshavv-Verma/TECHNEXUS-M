@@ -51,7 +51,6 @@ const Dashboard = () => {
         return;
       }
       const data = await response.json();
-      // API returns array directly, not wrapped in {products: [...]}
       setProducts(Array.isArray(data) ? data : data.products || []);
     } catch (error) {
       console.error('Error:', error);
@@ -77,9 +76,8 @@ const Dashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
+    setError(null);
     
-    // Validate form
     if (!newProduct.name || !newProduct.category || !newProduct.price) {
       setError('Please fill in all required fields (Name, Category, Price)');
       return;
@@ -113,10 +111,8 @@ const Dashboard = () => {
       const savedProduct = await response.json();
       console.log('Product saved:', savedProduct);
       
-      // Update products list
       setProducts(prevProducts => [...prevProducts, savedProduct]);
       
-      // Reset form
       setNewProduct({
         name: '',
         category: '',
@@ -190,7 +186,6 @@ const Dashboard = () => {
       const result = await response.json();
       console.log('Product updated:', result);
 
-      // Update the products list
       setProducts(prevProducts =>
         prevProducts.map(p => p._id === productId ? result.product : p)
       );
@@ -237,7 +232,6 @@ const Dashboard = () => {
         throw new Error(errorData.error || 'Failed to delete product');
       }
 
-      // Remove product from list
       setProducts(prevProducts => prevProducts.filter(p => p._id !== productId));
       setSuccess('Product deleted successfully!');
     } catch (error) {
@@ -247,24 +241,30 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="admin-dashboard-wrapper dark">
+    <div className="admin-dashboard-wrapper dark" role="main">
       <div className="admin-dashboard-header">
         <h1>Admin Console</h1>
-        <p className="admin-dashboard-subtitle">Manage products and customer orders</p>
-        <div className="admin-tabs" style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+        <p className="admin-dashboard-subtitle">Manage catalog items and customer orders</p>
+        <div className="admin-tabs" role="tablist" aria-label="Console Management Sections">
           <button
             type="button"
-            className={activeTab === 'products' ? 'admin-submit-btn' : 'btn-secondary'}
-            style={{ width: 'auto', padding: '8px 20px' }}
+            className={activeTab === 'products' ? 'active-tab' : ''}
             onClick={() => setActiveTab('products')}
+            role="tab"
+            aria-selected={activeTab === 'products'}
+            aria-controls="products-panel"
+            id="tab-products"
           >
             Products
           </button>
           <button
             type="button"
-            className={activeTab === 'orders' ? 'admin-submit-btn' : 'btn-secondary'}
-            style={{ width: 'auto', padding: '8px 20px' }}
+            className={activeTab === 'orders' ? 'active-tab' : ''}
             onClick={() => setActiveTab('orders')}
+            role="tab"
+            aria-selected={activeTab === 'orders'}
+            aria-controls="orders-panel"
+            id="tab-orders"
           >
             Orders ({orders.length})
           </button>
@@ -272,80 +272,64 @@ const Dashboard = () => {
       </div>
       
       {error && (
-        <div style={{
-          padding: '12px 16px',
-          background: '#fee',
-          border: '1px solid #fcc',
-          borderRadius: '6px',
-          color: '#c33',
-          marginBottom: '16px'
-        }}>
-          Error: {error}
+        <div className="admin-alert error" role="alert" aria-live="assertive">
+          <span>Error: {error}</span>
         </div>
       )}
 
       {success && (
-        <div style={{
-          padding: '12px 16px',
-          background: '#efe',
-          border: '1px solid #cfc',
-          borderRadius: '6px',
-          color: '#3c3',
-          marginBottom: '16px'
-        }}>
-          ✓ {success}
+        <div className="admin-alert success" role="alert" aria-live="polite">
+          <span>✓ {success}</span>
         </div>
       )}
       
       <div className="admin-dashboard-content">
         {activeTab === 'orders' && (
-          <div className="admin-products-overview" style={{ gridColumn: '1 / -1', width: '100%' }}>
+          <div 
+            className="admin-products-overview wide" 
+            id="orders-panel" 
+            role="tabpanel" 
+            aria-labelledby="tab-orders"
+          >
             <div className="admin-overview-header">
               <h2>ACTIVE ORDERS</h2>
               <span className="admin-product-count">{orders.length} pending delivery</span>
             </div>
             {ordersLoading ? (
-              <p style={{ color: '#888' }}>Loading orders…</p>
+              <p style={{ color: '#7f7f7f', fontFamily: 'ui-monospace, Consolas, monospace', fontSize: '12px' }}>Loading orders…</p>
             ) : orders.length === 0 ? (
-              <p style={{ color: '#888' }}>No active orders. Orders appear here after customers pay and disappear when they mark Received.</p>
+              <p style={{ color: '#7f7f7f', fontSize: '13.5px' }}>No active orders. Orders appear here after customers pay.</p>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div className="order-feed-container">
                 {orders.map((order) => (
-                  <div
-                    key={order._id}
-                    style={{
-                      background: '#fff',
-                      borderRadius: 8,
-                      padding: 20,
-                      border: '1px solid #e0e0e0',
-                      textAlign: 'left',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  <div key={order._id} className="admin-order-card">
+                    <div className="admin-order-header">
                       <div>
-                        <h3 style={{ margin: 0, color: '#1a1a1a' }}>{order.orderNumber}</h3>
-                        <p style={{ margin: '4px 0', color: '#666', fontSize: 14 }}>
+                        <h3 className="admin-order-no">{order.orderNumber}</h3>
+                        <p className="admin-order-date">
                           {formatOrderDate(order.createdAt)}
                         </p>
                       </div>
-                      <span style={{ fontSize: 13, color: '#4CAF50', fontWeight: 600 }}>{order.status}</span>
+                      <span className="admin-order-status">{order.status}</span>
                     </div>
-                    <p style={{ margin: '4px 0', fontSize: 14, color: '#333' }}>
-                      <strong>Customer:</strong>{' '}
-                      {order.userId?.name || '—'} ({order.userId?.email || '—'})
-                    </p>
-                    <p style={{ margin: '4px 0', fontSize: 14, color: '#333' }}>
-                      <strong>Total:</strong> ₹{order.totalAmount?.toLocaleString('en-IN')} ·{' '}
-                      <strong>Payment:</strong> {order.paymentMethod} ({order.paymentStatus})
-                    </p>
-                    {order.deliveryAddress && (
-                      <p style={{ margin: '8px 0', fontSize: 14, color: '#555' }}>
-                        <strong>Ship to:</strong> {order.deliveryAddress.fullName},{' '}
-                        {order.deliveryAddress.houseNo}, {order.deliveryAddress.street},{' '}
-                        {order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.pincode}
+                    <div className="admin-order-details">
+                      <p>
+                        <strong>Customer:</strong>{' '}
+                        {order.userId?.name || '—'} ({order.userId?.email || '—'})
                       </p>
-                    )}
-                    <ul style={{ margin: '12px 0 0', paddingLeft: 20, fontSize: 14, color: '#444' }}>
+                      <p>
+                        <strong>Total:</strong> ₹{order.totalAmount?.toLocaleString('en-IN')} ·{' '}
+                        <strong>Payment:</strong> {order.paymentMethod} ({order.paymentStatus})
+                      </p>
+                      {order.deliveryAddress && (
+                        <p style={{ marginTop: '6px', fontSize: '13px', color: '#dadada' }}>
+                          <strong>Ship to:</strong> {order.deliveryAddress.fullName},{' '}
+                          {order.deliveryAddress.houseNo}, {order.deliveryAddress.street},{' '}
+                          {order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.pincode}
+                        </p>
+                      )}
+                    </div>
+                    <ul className="admin-order-items">
                       {(order.orderItems || []).map((item, i) => (
                         <li key={i}>
                           {item.name} × {item.quantity} — ₹{(item.price * item.quantity).toLocaleString('en-IN')}
@@ -358,318 +342,232 @@ const Dashboard = () => {
             )}
           </div>
         )}
-
+ 
         {activeTab === 'products' && (
-        <>
-        <div className="admin-product-form-container">
-          <div className="admin-form-header">
-            <h2>Add New Product</h2>
-            <span className="admin-form-icon">+</span>
-          </div>
-          <form onSubmit={handleSubmit} className="admin-product-form">
-            <div className="admin-form-group">
-              <label>Product Name</label>
-              <input
-                type="text"
-                value={newProduct.name}
-                onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
-                className="admin-form-input"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label>Category</label>
-              <select
-                value={newProduct.category}
-                onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
-                className="admin-form-select"
-              >
-                <option value="">Select Category</option>
-                <option value="MOBANDACCESS">Mobile & Accessories</option>
-                <option value="ELECTRONICS">Electronics</option>
-              </select>
-            </div>
-
-            <div className="admin-form-group">
-              <label>Price (₹)</label>
-              <input
-                type="number"
-                value={newProduct.price}
-                onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
-                className="admin-form-input"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label>Image URL</label>
-              <input
-                type="text"
-                value={newProduct.image}
-                onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
-                className="admin-form-input"
-              />
-            </div>
-
-            <div className="admin-form-group">
-              <label>Description</label>
-              <textarea
-                value={newProduct.description}
-                onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
-                className="admin-form-textarea"
-              />
-            </div>
-
-            <button type="submit" className="admin-submit-btn">
-              Add Product
-              <span className="admin-btn-icon">→</span>
-            </button>
-          </form>
-        </div>
-
-        <div className="admin-products-overview">
-          <div className="admin-overview-header">
-            <h2>RECENTLY ADDED</h2>
-            <span className="admin-product-count">{products.length} items</span>
-          </div>
-          <div className="admin-products-grid">
-            {products && products.length > 0 ? (
-              products.map(product => (
-                <div key={product._id} className="admin-product-card">
-                  {editingId === product._id ? (
-                    // Edit Mode
-                    <div className="admin-product-edit-form">
-                      <h3 style={{ marginBottom: '12px', color: '#fff' }}>Edit Product</h3>
-                      
-                      <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Product Name</label>
-                        <input
-                          type="text"
-                          value={editData.name || ''}
-                          onChange={(e) => setEditData({...editData, name: e.target.value})}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            background: '#222',
-                            color: '#fff',
-                            fontSize: '13px',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-
-                      <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Category</label>
-                        <select
-                          value={editData.category || ''}
-                          onChange={(e) => setEditData({...editData, category: e.target.value})}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            background: '#222',
-                            color: '#fff',
-                            fontSize: '13px',
-                            boxSizing: 'border-box'
-                          }}
-                        >
-                          <option value="ELECTRONICS">Electronics</option>
-                          <option value="MOBANDACCESS">Mobile & Accessories</option>
-                        </select>
-                      </div>
-
-                      <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Price (₹)</label>
-                        <input
-                          type="number"
-                          value={editData.price || ''}
-                          onChange={(e) => setEditData({...editData, price: e.target.value})}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            background: '#222',
-                            color: '#fff',
-                            fontSize: '13px',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-
-                      <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Rating</label>
-                        <input
-                          type="number"
-                          min="0"
-                          max="5"
-                          step="0.1"
-                          value={editData.rating || ''}
-                          onChange={(e) => setEditData({...editData, rating: e.target.value})}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            background: '#222',
-                            color: '#fff',
-                            fontSize: '13px',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-
-                      <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Stock</label>
-                        <input
-                          type="number"
-                          value={editData.stock || ''}
-                          onChange={(e) => setEditData({...editData, stock: e.target.value})}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            background: '#222',
-                            color: '#fff',
-                            fontSize: '13px',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-
-                      <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Image URL</label>
-                        <input
-                          type="text"
-                          value={editData.image || ''}
-                          onChange={(e) => setEditData({...editData, image: e.target.value})}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            background: '#222',
-                            color: '#fff',
-                            fontSize: '13px',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-
-                      <div style={{ marginBottom: '10px' }}>
-                        <label style={{ display: 'block', fontSize: '12px', color: '#aaa', marginBottom: '4px' }}>Description</label>
-                        <textarea
-                          value={editData.description || ''}
-                          onChange={(e) => setEditData({...editData, description: e.target.value})}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            border: '1px solid #444',
-                            borderRadius: '4px',
-                            background: '#222',
-                            color: '#fff',
-                            fontSize: '13px',
-                            boxSizing: 'border-box',
-                            minHeight: '60px',
-                            fontFamily: 'inherit'
-                          }}
-                        />
-                      </div>
-
-                      <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-                        <button
-                          onClick={() => handleSave(product._id)}
-                          style={{
-                            flex: 1,
-                            padding: '8px',
-                            background: '#4CAF50',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={handleCancel}
-                          style={{
-                            flex: 1,
-                            padding: '8px',
-                            background: '#f44336',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    // View Mode
-                    <>
-                      <div className="admin-product-image-container">
-                        <img src={product.image || 'https://via.placeholder.com/200'} alt={product.name} className="admin-product-image" />
-                        <span className="admin-product-category">{product.category?.name || product.categoryId?.name || 'Unknown'}</span>
-                      </div>
-                      <div className="admin-product-details">
-                        <h3 className="admin-product-name">{product.name}</h3>
-                        <p className="admin-product-price">₹{product.price}</p>
-                        <p style={{ fontSize: '12px', color: '#888', marginTop: '4px' }}>Rating: {product.rating} | Stock: {product.stock}</p>
-                        <button
-                          onClick={() => handleEdit(product)}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            marginTop: '10px',
-                            background: '#2196F3',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          ✏️ Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product._id)}
-                          style={{
-                            width: '100%',
-                            padding: '8px',
-                            marginTop: '8px',
-                            background: '#f44336',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '4px',
-                            cursor: 'pointer',
-                            fontSize: '13px',
-                            fontWeight: 'bold'
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
+          <>
+            <div 
+              className="admin-product-form-container"
+              id="products-panel" 
+              role="tabpanel" 
+              aria-labelledby="tab-products"
+            >
+              <div className="admin-form-header">
+                <h2>Add New Product</h2>
+                <span className="admin-form-icon">+</span>
+              </div>
+              <form onSubmit={handleSubmit} className="admin-product-form">
+                <div className="admin-form-group">
+                  <label htmlFor="input-prod-name">Product Name</label>
+                  <input
+                    id="input-prod-name"
+                    type="text"
+                    value={newProduct.name}
+                    onChange={(e) => setNewProduct({...newProduct, name: e.target.value})}
+                    className="admin-form-input"
+                    required
+                  />
                 </div>
-              ))
-            ) : (
-              <p style={{color: '#888', gridColumn: '1/-1'}}>No products added yet</p>
-            )}
-          </div>
-        </div>
-        </>
+
+                <div className="admin-form-group">
+                  <label htmlFor="input-prod-cat">Category</label>
+                  <select
+                    id="input-prod-cat"
+                    value={newProduct.category}
+                    onChange={(e) => setNewProduct({...newProduct, category: e.target.value})}
+                    className="admin-form-select"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    <option value="MOBANDACCESS">Mobile & Accessories</option>
+                    <option value="ELECTRONICS">Electronics</option>
+                  </select>
+                </div>
+
+                <div className="admin-form-group">
+                  <label htmlFor="input-prod-price">Price (₹)</label>
+                  <input
+                    id="input-prod-price"
+                    type="number"
+                    value={newProduct.price}
+                    onChange={(e) => setNewProduct({...newProduct, price: e.target.value})}
+                    className="admin-form-input"
+                    required
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label htmlFor="input-prod-img">Image URL</label>
+                  <input
+                    id="input-prod-img"
+                    type="text"
+                    value={newProduct.image}
+                    onChange={(e) => setNewProduct({...newProduct, image: e.target.value})}
+                    className="admin-form-input"
+                  />
+                </div>
+
+                <div className="admin-form-group">
+                  <label htmlFor="input-prod-desc">Description</label>
+                  <textarea
+                    id="input-prod-desc"
+                    value={newProduct.description}
+                    onChange={(e) => setNewProduct({...newProduct, description: e.target.value})}
+                    className="admin-form-textarea"
+                  />
+                </div>
+
+                <button type="submit" className="admin-submit-btn">
+                  Add Product
+                  <span className="admin-btn-icon">→</span>
+                </button>
+              </form>
+            </div>
+
+            <div className="admin-products-overview">
+              <div className="admin-overview-header">
+                <h2>RECENTLY ADDED</h2>
+                <span className="admin-product-count">{products.length} items</span>
+              </div>
+              <div className="admin-products-grid">
+                {products && products.length > 0 ? (
+                  products.map(product => (
+                    <div key={product._id} className="admin-product-card">
+                      {editingId === product._id ? (
+                        // Card Edit Mode
+                        <div className="admin-product-edit-form">
+                          <h3>Edit Curation</h3>
+                          
+                          <div className="admin-edit-field">
+                            <label htmlFor={`edit-name-${product._id}`}>Name</label>
+                            <input
+                              id={`edit-name-${product._id}`}
+                              type="text"
+                              value={editData.name || ''}
+                              onChange={(e) => setEditData({...editData, name: e.target.value})}
+                            />
+                          </div>
+
+                          <div className="admin-edit-field">
+                            <label htmlFor={`edit-cat-${product._id}`}>Category</label>
+                            <select
+                              id={`edit-cat-${product._id}`}
+                              value={editData.category || ''}
+                              onChange={(e) => setEditData({...editData, category: e.target.value})}
+                            >
+                              <option value="ELECTRONICS">Electronics</option>
+                              <option value="MOBANDACCESS">Mobile & Accessories</option>
+                            </select>
+                          </div>
+
+                          <div className="admin-edit-field">
+                            <label htmlFor={`edit-price-${product._id}`}>Price (₹)</label>
+                            <input
+                              id={`edit-price-${product._id}`}
+                              type="number"
+                              value={editData.price || ''}
+                              onChange={(e) => setEditData({...editData, price: e.target.value})}
+                            />
+                          </div>
+
+                          <div className="admin-edit-field">
+                            <label htmlFor={`edit-rating-${product._id}`}>Rating</label>
+                            <input
+                              id={`edit-rating-${product._id}`}
+                              type="number"
+                              min="0"
+                              max="5"
+                              step="0.1"
+                              value={editData.rating || ''}
+                              onChange={(e) => setEditData({...editData, rating: e.target.value})}
+                            />
+                          </div>
+
+                          <div className="admin-edit-field">
+                            <label htmlFor={`edit-stock-${product._id}`}>Stock</label>
+                            <input
+                              id={`edit-stock-${product._id}`}
+                              type="number"
+                              value={editData.stock || ''}
+                              onChange={(e) => setEditData({...editData, stock: e.target.value})}
+                            />
+                          </div>
+
+                          <div className="admin-edit-field">
+                            <label htmlFor={`edit-img-${product._id}`}>Image URL</label>
+                            <input
+                              id={`edit-img-${product._id}`}
+                              type="text"
+                              value={editData.image || ''}
+                              onChange={(e) => setEditData({...editData, image: e.target.value})}
+                            />
+                          </div>
+
+                          <div className="admin-edit-field">
+                            <label htmlFor={`edit-desc-${product._id}`}>Description</label>
+                            <textarea
+                              id={`edit-desc-${product._id}`}
+                              value={editData.description || ''}
+                              onChange={(e) => setEditData({...editData, description: e.target.value})}
+                            />
+                          </div>
+
+                          <div className="admin-edit-actions">
+                            <button
+                              type="button"
+                              className="save"
+                              onClick={() => handleSave(product._id)}
+                            >
+                              Save
+                            </button>
+                            <button
+                              type="button"
+                              className="cancel"
+                              onClick={handleCancel}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        // Card View Mode
+                        <>
+                          <div className="admin-product-image-container">
+                            <img src={product.image || 'https://via.placeholder.com/200'} alt={product.name} className="admin-product-image" />
+                            <span className="admin-product-category">{product.category?.name || product.categoryId?.name || 'Unknown'}</span>
+                          </div>
+                          <div className="admin-product-details">
+                            <h3 className="admin-product-name">{product.name}</h3>
+                            <p className="admin-product-price">₹{product.price.toLocaleString('en-IN')}</p>
+                            <p className="admin-product-meta">⭐ {product.rating || "4.0"} · 📦 {product.stock || 0}</p>
+                            <div style={{ marginTop: '12px' }}>
+                              <button
+                                type="button"
+                                className="admin-card-btn edit"
+                                onClick={() => handleEdit(product)}
+                                aria-label={`Edit ${product.name}`}
+                              >
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                className="admin-card-btn delete"
+                                onClick={() => handleDelete(product._id)}
+                                aria-label={`Delete ${product.name}`}
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))
+                ) : (
+                  <p style={{ color: '#7f7f7f', gridColumn: '1/-1', fontSize: '13.5px' }}>No catalog items added yet.</p>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
     </div>

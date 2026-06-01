@@ -1,7 +1,7 @@
 require('dotenv').config();
-const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const { User } = require('../models');
+const { comparePassword } = require('../utils/passwordUtils');
 
 const connectDB = async () => {
   try {
@@ -41,9 +41,9 @@ const verifyAdmin = async () => {
     console.log(`  Is Admin: ${user.isAdmin}`);
     console.log(`  Created: ${user.createdAt}\n`);
 
-    // Test password
+    // Test password using rolling compare logic (supports bcrypt & Argon2)
     console.log(`Testing password: ${passwordToTest}`);
-    const isMatch = await bcrypt.compare(passwordToTest, user.password);
+    const isMatch = await comparePassword(passwordToTest, user.password);
     
     if (isMatch) {
       console.log('✓ Password matches! Login should work.\n');
