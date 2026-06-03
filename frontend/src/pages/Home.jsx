@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./home.css";
-import smartTv from "../assets/smartTv.png";
+import headphones from "../assets/headphones.png";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -60,7 +60,7 @@ const Home = () => {
           </p>
         </div>
         <div className="hero-showcase">
-          <img src={smartTv} alt="NTC UHD Smart TV Flagship Curation" />
+          <img src={headphones} alt="NTC Obsidian Professional Studio Wireless Headphones" />
         </div>
         <button className="hero-scroll-btn" onClick={handleScrollToCollections} aria-label="Scroll to curated collections">
           <span>Explore Catalog</span>
