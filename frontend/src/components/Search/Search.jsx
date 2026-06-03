@@ -6,8 +6,9 @@ import { joinApiUrl } from '../../services/api'
 
 const Search = ({setShowSearch}) => {
 
-  const[query,setQuery] = useState("");
-  const[searchResults, setSearchResults] = useState([]);
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
   const navigate = useNavigate();
   const modalRef = useRef(null);
   const inputRef = useRef(null);
@@ -16,10 +17,25 @@ const Search = ({setShowSearch}) => {
     setQuery(e.target.value);
   }
 
-  // Search products when query changes
+  // Debounce the query search term
   useEffect(() => {
-    if (query.length > 0) {
-      console.log('Searching for:', query);
+    if (query === "") {
+      setDebouncedQuery("");
+      return;
+    }
+    const handler = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [query]);
+
+  // Search products when debouncedQuery changes
+  useEffect(() => {
+    if (debouncedQuery.length > 0) {
+      console.log('Searching for:', debouncedQuery);
       fetch(joinApiUrl('/api/products'))
         .then(res => res.json())
         .then(data => {
@@ -39,8 +55,8 @@ const Search = ({setShowSearch}) => {
           
           if (products.length > 0) {
             const filtered = products.filter(product => 
-              (product.name && product.name.toLowerCase().includes(query.toLowerCase())) ||
-              (product.description && product.description.toLowerCase().includes(query.toLowerCase()))
+              (product.name && product.name.toLowerCase().includes(debouncedQuery.toLowerCase())) ||
+              (product.description && product.description.toLowerCase().includes(debouncedQuery.toLowerCase()))
             );
             console.log('Filtered results:', filtered);
             setSearchResults(filtered);
@@ -50,7 +66,7 @@ const Search = ({setShowSearch}) => {
     } else {
       setSearchResults([]);
     }
-  }, [query]);
+  }, [debouncedQuery]);
 
   // Close search when clicking outside
   const handleBackdropClick = (e) => {
@@ -112,9 +128,9 @@ const Search = ({setShowSearch}) => {
                 </div>
               ))}
             </div>
-          ) : query.length > 0 ? (
+          ) : debouncedQuery.length > 0 ? (
             <div className="search-empty">
-              <p>No products found for "{query}"</p>
+              <p>No products found for "{debouncedQuery}"</p>
               <p style={{fontSize: '12px', color: '#666', marginTop: '8px'}}>Try searching for different keywords</p>
             </div>
           ) : (
