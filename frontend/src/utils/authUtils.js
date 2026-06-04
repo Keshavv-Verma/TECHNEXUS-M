@@ -63,7 +63,14 @@ export const isTokenExpired = (token) => {
 
 export const isLoggedIn = () => {
   const token = getToken();
-  return !!token && !isTokenExpired(token);
+  if (token && !isTokenExpired(token)) {
+    return true;
+  }
+  const refreshToken = localStorage.getItem('refreshToken');
+  if (refreshToken && !isTokenExpired(refreshToken)) {
+    return true;
+  }
+  return false;
 };
 
 export const clearAuth = () => {

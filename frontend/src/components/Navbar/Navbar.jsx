@@ -43,7 +43,9 @@ const Navbar = () => {
 
   const checkAuthStatus = useCallback(() => {
     const token = getToken();
-    if (token && isTokenExpired(token)) {
+    const refreshToken = localStorage.getItem('refreshToken');
+    // Only clear auth if the access token is expired AND there is no valid refresh token
+    if (token && isTokenExpired(token) && (!refreshToken || isTokenExpired(refreshToken))) {
       clearAuth();
     }
     const isAdminUser = localStorage.getItem("isAdmin");

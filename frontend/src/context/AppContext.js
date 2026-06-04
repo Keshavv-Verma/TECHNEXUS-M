@@ -1,7 +1,7 @@
 import { createContext, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import { clearAuth, getToken, persistAuth } from "../utils/authUtils";
+import { clearAuth, getToken, isTokenExpired, persistAuth } from "../utils/authUtils";
 import { joinApiUrl } from "../services/api";
 
 export const Context = createContext();
@@ -74,6 +74,37 @@ const AppContext = ({ children }) => {
       axios.interceptors.request.eject(requestInterceptor);
       axios.interceptors.response.eject(responseInterceptor);
     };
+  }, []);
+
+  // Proactively refresh access token on startup if it's expired but refresh token is still valid
+  useEffect(() => {
+    const proactiveRefresh = async () => {
+      const token = getToken();
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken || isTokenExpired(refreshToken)) return;  // No valid refresh token, skip
+      if (token && !isTokenExpired(token)) return;               // Access token still good, skip
+
+      try {
+        const response = await axios.post(
+          joinApiUrl('/api/refresh-token'),
+          { refreshToken }
+        );
+        if (response.status === 200 || response.status === 201) {
+          const { token: newToken, refreshToken: newRefreshToken } = response.data;
+          persistAuth({
+            token: newToken,
+            refreshToken: newRefreshToken,
+            isAdmin: localStorage.getItem('isAdmin') === 'true',
+            userId: localStorage.getItem('userId'),
+          });
+        }
+      } catch (err) {
+        console.error('Proactive token refresh failed:', err);
+        // Only clear auth if the refresh token itself is confirmed invalid
+        clearAuth();
+      }
+    };
+    proactiveRefresh();
   }, []);
 
   //code for saving state to local storage
