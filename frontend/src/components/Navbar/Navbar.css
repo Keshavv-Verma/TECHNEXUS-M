@@ -503,6 +503,11 @@
   .tn-navbar__menu:not(.tn-navbar__drawer) {
     display: none;
   }
+
+  .grid-icon {
+    display: inline-flex;
+    z-index: 10001;
+  }
 }
 
 @media screen and (max-width: 768px) {
@@ -516,10 +521,7 @@
     gap: 0.5rem;
   }
 
-  .grid-icon {
-    display: inline-flex;
-    z-index: 10001;
-  }
+
 
   .mobile-show {
     display: block;

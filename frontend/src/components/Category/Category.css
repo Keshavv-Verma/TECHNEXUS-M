@@ -1,32 +1,389 @@
-.category-main-content{
-    margin: 100px 0 75px 0;
-}
-.category-layout{
-    max-width: 1500px;
-    margin: 50px auto;
-}
-.category-title{
-    font-size: 34px;
-    text-align: center;
-}
-.product-container{
-    margin: 50px 0;
-    
+/* ==========================================================================
+   TechNexus Category Page with Catalogue Filters Stylesheet
+   ========================================================================== */
+
+.category-main-content {
+  margin: 120px 0 80px 0;
+  min-height: 80vh;
+  font-family: "Outfit", "Segoe UI", sans-serif;
+  color: #ffffff;
+  background-color: #050505;
 }
 
+.category-layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
 
-@media screen and (max-width:990px){
-    .category-main-content {
-        margin: 100px 0 30px 0;
-    }
-    .category-title{
-        font-size: 24px;
-        margin-bottom: 50px;
-    }
-    .category-layout{
-        max-width: calc(100% - 60px);
-    }
-    .product-container{
-        margin: 20px 0;
-    }
+.category-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding-bottom: 20px;
+}
+
+.category-title {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.mobile-filter-toggle-btn {
+  display: none;
+  background: #111115;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-filter-toggle-btn:hover {
+  background: #ffffff;
+  color: #050505;
+  border-color: #ffffff;
+}
+
+/* Two-column layout */
+.category-content-container {
+  display: flex;
+  gap: 40px;
+  align-items: flex-start;
+}
+
+/* ─── Catalogue Sidebar Filters ─── */
+.category-filter-sidebar {
+  width: 300px;
+  background: #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  padding: 24px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 100px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.sidebar-header h3 {
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  margin: 0;
+  text-transform: uppercase;
+  color: #ffffff;
+}
+
+.sidebar-close-btn {
+  display: none;
+  background: transparent;
+  border: none;
+  color: #7f7f7f;
+  cursor: pointer;
+  font-size: 20px;
+  padding: 4px;
+}
+
+.filter-section {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  padding-bottom: 24px;
+  margin-bottom: 24px;
+}
+
+.filter-section:last-of-type {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.filter-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 16px 0;
+  color: #7f7f7f;
+}
+
+/* Sorting Dropdown */
+.filter-sort-select {
+  width: 100%;
+  background: #111115;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  color: #ffffff;
+  padding: 10px 12px;
+  font-family: inherit;
+  font-size: 13.5px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.3s ease;
+}
+
+.filter-sort-select:focus {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Price Range Slider */
+.price-slider-info {
+  display: flex;
+  justify-content: space-between;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  color: #7f7f7f;
+  margin-bottom: 12px;
+}
+
+.price-slider-info .price-highlight {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.filter-price-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  margin: 8px 0;
+}
+
+.filter-price-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  cursor: pointer;
+  border: 2px solid #0b0b0b;
+  transition: transform 0.2s ease;
+}
+
+.filter-price-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+/* Brand Checkboxes */
+.brands-list-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.brands-list-container::-webkit-scrollbar {
+  width: 4px;
+}
+
+.brands-list-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+}
+
+.brand-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: #dadada;
+  user-select: none;
+  transition: color 0.2s ease;
+}
+
+.brand-checkbox-label:hover {
+  color: #ffffff;
+}
+
+.custom-checkbox {
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: #111115;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #050505;
+  font-size: 11px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.custom-checkbox.checked {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #050505;
+}
+
+.brand-name-text {
+  line-height: 1;
+}
+
+/* Reset Button */
+.filter-reset-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  color: #dadada;
+  padding: 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 16px;
+  transition: all 0.3s ease;
+}
+
+.filter-reset-btn:hover {
+  border-color: #ffffff;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* Products wrapper */
+.category-products-wrapper {
+  flex-grow: 1;
+  width: 100%;
+}
+
+.category-products-wrapper .product-container {
+  margin: 0;
+}
+
+/* No products found state */
+.no-products-found {
+  text-align: center;
+  padding: 80px 24px;
+  background: #0b0b0b;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.no-products-found h3 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.no-products-found p {
+  color: #7f7f7f;
+  margin: 0;
+  font-size: 14px;
+  max-width: 360px;
+  line-height: 1.5;
+}
+
+/* ==========================================================================
+   Responsive Sidebar / Slide-out mobile drawer
+   ========================================================================== */
+
+@media screen and (max-width: 990px) {
+  .category-main-content {
+    margin-top: 100px;
+  }
+
+  .category-header-row {
+    margin-bottom: 24px;
+  }
+
+  .category-title {
+    font-size: 24px;
+  }
+
+  .mobile-filter-toggle-btn {
+    display: inline-flex;
+  }
+
+  .category-content-container {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  /* Slide-out drawer styles */
+  .category-filter-sidebar {
+    position: fixed;
+    top: 0;
+    right: -320px; /* Hidden on right side */
+    bottom: 0;
+    width: 300px;
+    height: 100vh;
+    z-index: 9990;
+    border-radius: 0;
+    border: none;
+    border-left: 1px solid rgba(255, 255, 255, 0.06);
+    background: #0a0b0e;
+    transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.6);
+  }
+
+  .category-filter-sidebar.open {
+    right: 0; /* Slide in */
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .brands-list-container {
+    max-height: none;
+    flex-grow: 1;
+  }
+
+  /* Backdrop filter overlay */
+  .sidebar-mobile-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9989;
+    animation: fadeIn 0.3s ease;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media screen and (max-width: 480px) {
+  .category-layout {
+    padding: 0 16px;
+  }
 }
