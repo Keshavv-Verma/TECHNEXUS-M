@@ -54,6 +54,18 @@ export default function Electronics() {
       });
   }, []);
 
+  // Lock body scroll when mobile filters are open
+  useEffect(() => {
+    if (isMobileFilterOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isMobileFilterOpen]);
+
   // Compute unique brands and price bounds from fetched products
   const { uniqueBrands, minPrice, maxPrice } = useMemo(() => {
     const brands = new Set();

@@ -73,6 +73,18 @@ const Category = () => {
         setstate((prev) => ({ ...prev, products: data }));
     }, [data, setstate]);
 
+    // Lock body scroll when mobile filters are open
+    useEffect(() => {
+        if (isMobileFilterOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isMobileFilterOpen]);
+
     // Filtered & Sorted products list
     const filteredAndSortedProducts = useMemo(() => {
         let results = productsList.filter(item => {
