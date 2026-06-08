@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './AIAssistant.css';
 import { FiSend, FiX, FiMessageCircle, FiExternalLink, FiUser, FiCpu } from 'react-icons/fi';
 import { BiLoader } from 'react-icons/bi';
@@ -90,10 +90,17 @@ const AIAssistant = () => {
   const messagesEndRef = useRef(null);
   const API_BASE_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/\/+$/, '');
 
+  const location = useLocation();
+
   // Auto-scroll to latest message
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Auto-close AI assistant when page changes
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
   const submitProductQuery = async (query) => {
     const userMessage = {

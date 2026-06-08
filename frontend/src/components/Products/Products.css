@@ -27,7 +27,7 @@
 
 @media screen and (max-width:990px){
     .product-container{
-        margin: 80px;
+        margin: 20px 10px;
     }
     .sec-heading{
         font-size: 18px;

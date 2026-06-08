@@ -3,20 +3,17 @@ import Product from './Product/Product'
 import './Products.css'
 import { Context } from '../../context/AppContext'
 
-const Products = ({ innerPage, headingText }) => {
-
-    
+const Products = ({ innerPage, headingText, productsData }) => {
 
     const { state } = useContext(Context);
 
-    // console.log("products", state.products);
-
+    const dataList = productsData?.data || state?.products?.data || [];
 
     return (
         <div className='product-container'>
             {!innerPage && <div className='sec-heading'>{headingText}</div>}
             <div className='products'>
-                {state?.products?.data?.map((item) => (
+                {dataList.map((item) => (
 
                     
                     <Product 

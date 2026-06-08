@@ -35,12 +35,12 @@
 .gpt3__footer-links {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     flex-direction: row;
     flex-wrap: wrap;
-    height: 300px;
     width: 100%;
     text-align: left;
+    padding: 60px 0;
 }
 
 .gpt3__footer-links div {
@@ -122,8 +122,9 @@
     }
 
     .gpt3__footer-links{
-        height: 600px;
-        
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
     }
    
     .btnnn p{
