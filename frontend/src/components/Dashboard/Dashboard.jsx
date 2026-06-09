@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAdminOrders } from '../../services/checkoutService';
 import { joinApiUrl } from '../../services/api';
+import SpecificationsManager from './SpecificationsManager';
 import './Dashboard.css';
 
 const formatOrderDate = (d) =>
@@ -16,14 +17,17 @@ const Dashboard = () => {
   const [success, setSuccess] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
+  const [showSpecsManager, setShowSpecsManager] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: '',
     category: '',
     price: '',
     rating: 4,
     image: '',
-    description: ''
+    description: '',
+    specifications: []
   });
+  const [newSpec, setNewSpec] = useState({ key: '', value: '' });
   const navigate = useNavigate();
 
   const fetchOrders = useCallback(async () => {
@@ -74,6 +78,26 @@ const Dashboard = () => {
     }
   }, [activeTab, fetchOrders]);
 
+  const handleAddSpecToNewProduct = () => {
+    if (!newSpec.key.trim() || !newSpec.value.trim()) {
+      setError('Please enter both specification key and value');
+      return;
+    }
+    setNewProduct({
+      ...newProduct,
+      specifications: [...newProduct.specifications, { key: newSpec.key.trim(), value: newSpec.value.trim() }]
+    });
+    setNewSpec({ key: '', value: '' });
+    setError(null);
+  };
+
+  const handleRemoveSpecFromNewProduct = (index) => {
+    setNewProduct({
+      ...newProduct,
+      specifications: newProduct.specifications.filter((_, i) => i !== index)
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -119,8 +143,10 @@ const Dashboard = () => {
         price: '',
         rating: 4,
         image: '',
-        description: ''
+        description: '',
+        specifications: []
       });
+      setNewSpec({ key: '', value: '' });
       
       alert('Product added successfully!');
     } catch (error) {
@@ -259,6 +285,17 @@ const Dashboard = () => {
           </button>
           <button
             type="button"
+            className={activeTab === 'specifications' ? 'active-tab' : ''}
+            onClick={() => setActiveTab('specifications')}
+            role="tab"
+            aria-selected={activeTab === 'specifications'}
+            aria-controls="specifications-panel"
+            id="tab-specifications"
+          >
+            Specifications
+          </button>
+          <button
+            type="button"
             className={activeTab === 'orders' ? 'active-tab' : ''}
             onClick={() => setActiveTab('orders')}
             role="tab"
@@ -355,7 +392,8 @@ const Dashboard = () => {
                 <h2>Add New Product</h2>
                 <span className="admin-form-icon">+</span>
               </div>
-              <form onSubmit={handleSubmit} className="admin-product-form">
+              <div className="admin-product-form-scroll">
+                <form onSubmit={handleSubmit} className="admin-product-form">
                 <div className="admin-form-group">
                   <label htmlFor="input-prod-name">Product Name</label>
                   <input
@@ -416,11 +454,125 @@ const Dashboard = () => {
                   />
                 </div>
 
+                {/* Specifications Section */}
+                <div style={{ borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '16px', marginTop: '16px' }}>
+                  <div className="admin-form-group" style={{ marginBottom: '12px' }}>
+                    <label style={{ fontSize: '11px', color: '#7f7f7f', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Specifications
+                    </label>
+                  </div>
+
+                  {/* Current Specifications List */}
+                  {newProduct.specifications.length > 0 && (
+                    <div style={{ marginBottom: '12px', maxHeight: '120px', overflowY: 'auto' }}>
+                      {newProduct.specifications.map((spec, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            padding: '8px 10px',
+                            marginBottom: '6px',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '4px',
+                            fontSize: '12px'
+                          }}
+                        >
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ color: '#ffffff', fontWeight: '500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {spec.key}
+                            </div>
+                            <div style={{ color: '#dadada', fontSize: '11px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              {spec.value}
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveSpecFromNewProduct(index)}
+                            style={{
+                              marginLeft: '8px',
+                              padding: '4px 8px',
+                              background: 'rgba(239, 68, 68, 0.08)',
+                              color: '#fca5a5',
+                              border: '1px solid rgba(239, 68, 68, 0.15)',
+                              borderRadius: '3px',
+                              fontSize: '10px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                              transition: 'all 0.2s'
+                            }}
+                            onMouseOver={(e) => {
+                              e.target.style.background = '#ef4444';
+                              e.target.style.color = '#ffffff';
+                              e.target.style.borderColor = '#ef4444';
+                            }}
+                            onMouseOut={(e) => {
+                              e.target.style.background = 'rgba(239, 68, 68, 0.08)';
+                              e.target.style.color = '#fca5a5';
+                              e.target.style.borderColor = 'rgba(239, 68, 68, 0.15)';
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Add Specification Inputs */}
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '12px' }}>
+                    <input
+                      type="text"
+                      placeholder="Key (e.g., Display)"
+                      value={newSpec.key}
+                      onChange={(e) => setNewSpec({...newSpec, key: e.target.value})}
+                      className="admin-form-input"
+                      style={{ flex: 1 }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Value"
+                      value={newSpec.value}
+                      onChange={(e) => setNewSpec({...newSpec, value: e.target.value})}
+                      className="admin-form-input"
+                      style={{ flex: 1 }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleAddSpecToNewProduct}
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      color: '#ffffff',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.12)';
+                    }}
+                    onMouseOut={(e) => {
+                      e.target.style.background = 'rgba(255, 255, 255, 0.08)';
+                    }}
+                  >
+                    + Add Specification
+                  </button>
+                </div>
+
                 <button type="submit" className="admin-submit-btn">
                   Add Product
                   <span className="admin-btn-icon">→</span>
                 </button>
               </form>
+              </div>
             </div>
 
             <div className="admin-products-overview">
@@ -569,7 +721,48 @@ const Dashboard = () => {
             </div>
           </>
         )}
+
+        {activeTab === 'specifications' && (
+          <div 
+            className="admin-products-overview wide" 
+            id="specifications-panel" 
+            role="tabpanel" 
+            aria-labelledby="tab-specifications"
+          >
+            <div className="admin-overview-header">
+              <h2>PRODUCT SPECIFICATIONS</h2>
+              <span className="admin-product-count">Manage product details</span>
+            </div>
+            <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+              <p style={{ color: '#dadada', marginBottom: '20px', fontSize: '13.5px' }}>
+                Add or edit specifications for your products
+              </p>
+              <button
+                type="button"
+                className="admin-submit-btn"
+                onClick={() => setShowSpecsManager(true)}
+                style={{ width: '200px', margin: '0 auto' }}
+              >
+                Open Specifications Manager
+              </button>
+            </div>
+          </div>
+        )}
       </div>
+
+      {showSpecsManager && (
+        <SpecificationsManager
+          onClose={() => {
+            setShowSpecsManager(false);
+            fetchProducts();
+          }}
+          onSuccess={(updatedProduct) => {
+            setProducts(prevProducts =>
+              prevProducts.map(p => p._id === updatedProduct._id ? updatedProduct : p)
+            );
+          }}
+        />
+      )}
     </div>
   );
 };
