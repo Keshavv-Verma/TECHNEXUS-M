@@ -127,9 +127,23 @@ const ProductPage = () => {
           </div>
 
           <div className="product-description">
-            <h3>Curator Specifications</h3>
+            <h3>Description</h3>
             <p>{product.description}</p>
           </div>
+
+          {product.specifications && product.specifications.length > 0 && (
+            <div className="product-specifications">
+              <h3>Specifications</h3>
+              <div className="specs-list">
+                {product.specifications.map((spec, index) => (
+                  <div key={index} className="spec-item">
+                    <span className="spec-key">{spec.key}:</span>
+                    <span className="spec-value">{spec.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="product-features">
             <div className="feature-item">
