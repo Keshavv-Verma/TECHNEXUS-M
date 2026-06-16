@@ -33,7 +33,7 @@ const signup = async (req, res, next) => {
       name: value.name,
       email: value.email.toLowerCase(),
       password: hashedPassword,
-    });
+    }); 
 
     res.status(201).json({
       message: 'User created successfully',

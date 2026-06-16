@@ -2,11 +2,54 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./home.css";
 import headphones from "../assets/headphones.png";
+import InfiniteMenu from "../components/InfiniteMenu/InfiniteMenu";
+import { joinApiUrl } from "../services/api";
 
 const Home = () => {
   const navigate = useNavigate();
   const [isCollectionsVisible, setIsCollectionsVisible] = useState(false);
   const collectionsRef = useRef(null);
+  const [menuItems, setMenuItems] = useState([]);
+
+  useEffect(() => {
+    fetch(joinApiUrl('/api/products'))
+      .then(res => res.json())
+      .then(data => {
+        let products = [];
+        if (Array.isArray(data)) {
+          products = data;
+        } else if (data.products && Array.isArray(data.products)) {
+          products = data.products;
+        } else if (data.data && Array.isArray(data.data)) {
+          products = data.data;
+        }
+
+        const mapped = products.map(product => {
+          const id = product.id || product._id;
+          const attributes = product.attributes || product;
+          const name = attributes.name || attributes.title;
+          const price = attributes.price;
+          const image = (attributes.img?.data?.[0]?.attributes?.url) || product.image || 'https://via.placeholder.com/300?text=Product';
+          
+          return {
+            image: image,
+            link: `/productpage/${id}`,
+            title: name,
+            description: `₹${price.toLocaleString('en-IN')}`,
+            price: price,
+            category: attributes.category?.name || attributes.categoryName || 'Gear',
+            subcategory: attributes.subcategory || '',
+            rating: attributes.rating || 4,
+            specifications: attributes.specifications || []
+          };
+        });
+        
+        setMenuItems(mapped);
+      })
+      .catch(err => {
+        console.error("Failed to fetch products for InfiniteMenu:", err);
+      });
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -175,6 +218,22 @@ const Home = () => {
           </button>
         </div>
       </section>
+
+      {/* 7. Animated 3D Showcase */}
+      {menuItems.length > 0 && (
+        <section className="home-infinite-showcase">
+          <div className="section-header text-center">
+            <p className="section-tag">Interactive Catalog</p>
+            <h2 className="section-title">The Obsidian Sphere</h2>
+            <p className="section-subtitle">
+              Drag, rotate, and interact with our product gallery in a 3D responsive environment.
+            </p>
+          </div>
+          <div className="infinite-menu-wrapper">
+            <InfiniteMenu items={menuItems} scale={1.1} />
+          </div>
+        </section>
+      )}
     </div>
   );
 };
