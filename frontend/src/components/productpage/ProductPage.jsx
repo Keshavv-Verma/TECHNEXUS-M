@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiShare2, FiCheckCircle, FiTruck } from 'react-icons/fi';
 import { loadCart, saveCart, normalizeCartItem, getProductId } from '../../utils/cartUtils';
 import { joinApiUrl } from '../../services/api';
+import { addCartItem } from '../../services/cartService';
+import { isLoggedIn } from '../../utils/authUtils';
 import './productpage.css';
 
 const ProductPage = () => {
@@ -29,8 +31,16 @@ const ProductPage = () => {
     fetchProduct();
   }, [id]);
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     const pid = String(getProductId(product));
+    if (isLoggedIn()) {
+      try {
+        await addCartItem(pid, 1);
+      } catch (error) {
+        console.error('Backend cart add failed:', error.message || error);
+      }
+    }
+
     const cart = loadCart();
     const existingItem = cart.find((item) => item.id === pid);
 
@@ -52,8 +62,18 @@ const ProductPage = () => {
     setTimeout(() => setIsAdded(false), 2000);
   };
 
-  const handleBuyNow = () => {
+  const handleBuyNow = async () => {
     if (!product) return;
+    const pid = String(getProductId(product));
+
+    if (isLoggedIn()) {
+      try {
+        await addCartItem(pid, 1);
+      } catch (error) {
+        console.error('Backend cart add failed:', error.message || error);
+      }
+    }
+
     saveCart([normalizeCartItem(product, 1)]);
     navigate('/cart');
   };

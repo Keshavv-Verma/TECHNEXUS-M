@@ -14,6 +14,7 @@ const couponRoutes = require('./routes/couponRoutes');
 const checkoutRoutes = require('./routes/checkoutRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
+const cartRoutes = require('./routes/cartRoutes');
 const aiRoutes = require('./routes/aiRoutes');
 const errorHandler = require('./middlewares/errorHandler');
 const logger = require('./utils/logger');
@@ -110,6 +111,7 @@ app.use('/api', couponRoutes);
 app.use('/api', checkoutRoutes);
 app.use('/api', orderRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api', cartRoutes);
 app.use('/api/ai', aiRoutes);
 
 // 404 handler

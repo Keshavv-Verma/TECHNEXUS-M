@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import axios from "axios";
 import { clearAuth, getToken, isTokenExpired, persistAuth } from "../utils/authUtils";
 import { joinApiUrl } from "../services/api";
+import { addCartItem } from "../services/cartService";
 
 export const Context = createContext();
 
@@ -141,9 +142,29 @@ const AppContext = ({ children }) => {
   }, [cartItems]);
   //*************************************************************************************************
 
-  const handleAddToCart = (product, quantity) => {
+  const handleAddToCart = async (product, quantity) => {
     let items = [...cartItems];
     let index = items?.findIndex((p) => p.id === product?.id);
+    const token = getToken();
+
+    if (token && product?.id) {
+      try {
+        const persisted = await addCartItem(product.id, quantity);
+        const finalQuantity = persisted?.quantity ?? quantity;
+
+        if (index !== -1) {
+          items[index].attributes.quantity += finalQuantity;
+        } else {
+          product.attributes.quantity = finalQuantity;
+          items = [...items, product];
+        }
+        setCartItems(items);
+        return;
+      } catch (error) {
+        console.error('Failed to persist cart item to backend:', error.message || error);
+      }
+    }
+
     if (index !== -1) {
       items[index].attributes.quantity += quantity;
     } else {
