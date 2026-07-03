@@ -47,11 +47,6 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Stock cannot be negative'],
     },
-    reservedStock: {
-      type: Number,
-      default: 0,
-      min: [0, 'Reserved stock cannot be negative'],
-    },
     isActive: {
       type: Boolean,
       default: true,

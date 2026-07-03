@@ -4,7 +4,7 @@ import { FiShoppingCart, FiHeart, FiShare2, FiCheckCircle, FiTruck } from 'react
 import { loadCart, saveCart, normalizeCartItem, getProductId } from '../../utils/cartUtils';
 import { joinApiUrl } from '../../services/api';
 import { addCartItem, getCartItems } from '../../services/cartService';
-import { isLoggedIn } from '../../utils/authUtils';
+import { isLoggedIn, redirectToLogin } from '../../utils/authUtils';
 import './productpage.css';
 
 const ProductPage = () => {
@@ -36,35 +36,20 @@ const ProductPage = () => {
     const pid = String(getProductId(product) || id);
     const normalizedProduct = { ...product, id: pid };
 
-    if (isLoggedIn()) {
-      try {
-        await addCartItem(pid, 1);
-        const items = await getCartItems();
-        saveCart(items);
-      } catch (error) {
-        console.error('Backend cart add failed:', error.message || error);
-      }
-    } else {
-      const cart = loadCart();
-      const existingItem = cart.find((item) => item.id === pid);
-
-      if (existingItem) {
-        const stock = existingItem.stock ?? product.stock ?? 99;
-        if (existingItem.quantity >= stock) {
-          alert(`Only ${stock} units available`);
-          return;
-        }
-        const updatedCart = cart.map((item) =>
-          item.id === pid ? { ...item, quantity: item.quantity + 1 } : item
-        );
-        saveCart(updatedCart);
-      } else {
-        saveCart([...cart, normalizeCartItem(normalizedProduct, 1)]);
-      }
+    if (!isLoggedIn()) {
+      redirectToLogin(navigate, `/product/${pid}`);
+      return;
     }
 
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000);
+    try {
+      await addCartItem(pid, 1);
+      const items = await getCartItems();
+      saveCart(items);
+      setIsAdded(true);
+      setTimeout(() => setIsAdded(false), 2000);
+    } catch (error) {
+      console.error('Backend cart add failed:', error.message || error);
+    }
   };
 
   const handleBuyNow = async () => {

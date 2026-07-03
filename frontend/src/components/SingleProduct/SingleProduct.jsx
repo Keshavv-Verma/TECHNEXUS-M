@@ -9,7 +9,7 @@ import RelatedProduct from "./RelatedProduct/RelatedProduct";
 import Notification from "../Notification/Notification";
 
 import useFetch from "../../hooks/useFetch";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Context } from "../../context/AppContext";
 import { addCartItem } from "../../services/cartService";
 import { isLoggedIn } from "../../utils/authUtils";
@@ -32,6 +32,7 @@ function SingleProduct() {
     });
   };
 
+  const navigate = useNavigate();
   const { id } = useParams();
   const { data } = useFetch(`/api/products/${id}`);
 
@@ -78,12 +79,15 @@ function SingleProduct() {
               <button
                 className="add_to_cart_button"
                 onClick={async () => {
-                  if (isLoggedIn()) {
-                    try {
-                      await addCartItem(data.data[0].id, count);
-                    } catch (error) {
-                      console.error('Backend cart add failed:', error.message || error);
-                    }
+                  if (!isLoggedIn()) {
+                    navigate('/login', { state: { redirect: `/product/${data.data[0].id}` } });
+                    return;
+                  }
+
+                  try {
+                    await addCartItem(data.data[0].id, count);
+                  } catch (error) {
+                    console.error('Backend cart add failed:', error.message || error);
                   }
                   handleAddToCart(data.data[0], count);
                   setCount(1);

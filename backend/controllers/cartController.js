@@ -2,9 +2,6 @@ const mongoose = require('mongoose');
 const { CartItem, Product } = require('../models');
 const logger = require('../utils/logger');
 
-const getAvailableStock = (product) =>
-  Math.max(0, (product.stock ?? 0) - (product.reservedStock ?? 0));
-
 const normalizeCartItem = (item) => {
   const product = item.productId;
   const image =
@@ -70,25 +67,24 @@ const addCartItem = async (req, res, next) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    const available = getAvailableStock(product);
     const existing = await CartItem.findOne({ userId: req.user.userId, productId }).session(session);
 
     if (existing) {
-      if (qty > available) {
+      const totalQuantity = existing.quantity + qty;
+      if (totalQuantity > product.stock) {
         await session.abortTransaction();
-        return res.status(400).json({ error: `Only ${available} units available` });
+        return res.status(400).json({ error: `Only ${product.stock} units available` });
       }
-      existing.quantity += qty;
-      product.reservedStock += qty;
+      existing.quantity = totalQuantity;
       await Promise.all([existing.save({ session }), product.save({ session })]);
       const updated = await CartItem.findById(existing._id).populate('productId');
       await session.commitTransaction();
       return res.status(200).json(normalizeCartItem(updated));
     }
 
-    if (qty > available) {
+    if (qty > product.stock) {
       await session.abortTransaction();
-      return res.status(400).json({ error: `Only ${available} units available` });
+      return res.status(400).json({ error: `Only ${product.stock} units available` });
     }
 
     const cartItem = await CartItem.create(
@@ -101,9 +97,6 @@ const addCartItem = async (req, res, next) => {
       ],
       { session }
     );
-
-    product.reservedStock += qty;
-    await product.save({ session });
 
     const populated = await CartItem.findById(cartItem[0]._id).populate('productId');
     await session.commitTransaction();
@@ -143,17 +136,12 @@ const updateCartItem = async (req, res, next) => {
       return res.status(404).json({ error: 'Product not found' });
     }
 
-    const diff = quantity - cartItem.quantity;
-    if (diff > 0) {
-      const available = getAvailableStock(product);
-      if (diff > available) {
-        await session.abortTransaction();
-        return res.status(400).json({ error: `Only ${available} units available` });
-      }
+    if (quantity > product.stock) {
+      await session.abortTransaction();
+      return res.status(400).json({ error: `Only ${product.stock} units available` });
     }
 
     cartItem.quantity = quantity;
-    product.reservedStock = Math.max(0, product.reservedStock + diff);
 
     await Promise.all([cartItem.save({ session }), product.save({ session })]);
     const populated = await CartItem.findById(cartItem._id).populate('productId');
@@ -179,12 +167,6 @@ const removeCartItem = async (req, res, next) => {
     if (!cartItem) {
       await session.abortTransaction();
       return res.status(404).json({ error: 'Cart item not found' });
-    }
-
-    const product = await Product.findById(productId).session(session);
-    if (product) {
-      product.reservedStock = Math.max(0, product.reservedStock - cartItem.quantity);
-      await product.save({ session });
     }
 
     await CartItem.deleteOne({ _id: cartItem._id }).session(session);

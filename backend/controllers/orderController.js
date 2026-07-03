@@ -69,10 +69,9 @@ const placeOrder = async (req, res, next) => {
         {
           _id: item.productId,
           stock: { $gte: item.quantity },
-          reservedStock: { $gte: item.quantity },
         },
         {
-          $inc: { stock: -item.quantity, reservedStock: -item.quantity },
+          $inc: { stock: -item.quantity },
         },
         { new: true, session }
       );
