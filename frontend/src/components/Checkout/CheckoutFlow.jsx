@@ -353,6 +353,8 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
     stripePaymentIntentId: extra.stripePaymentIntentId || null,
   });
 
+  const hasOutOfStockItems = cartItems.some((item) => (item.stock ?? 0) <= 0);
+
   const finalizeOrder = async (extra) => {
     const order = await placeOrder(placeOrderPayload(extra));
     saveCart([]);
@@ -372,6 +374,12 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   };
 
   const handlePlaceOrder = async () => {
+    if (hasOutOfStockItems) {
+      showToast('Remove out-of-stock items before placing the order', 'error');
+      setStep(1);
+      return;
+    }
+
     if (!selectedAddressId) {
       showToast('Select a delivery address', 'error');
       return;
@@ -439,6 +447,10 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   const goNext = () => {
     if (step === 1) {
       if (!cartItems.length) return;
+      if (hasOutOfStockItems) {
+        showToast('Remove out-of-stock items before continuing checkout', 'error');
+        return;
+      }
       if (!isLoggedIn()) {
         showToast('Please sign in to continue checkout', 'error');
         redirectToLogin(navigate, '/cart');
@@ -509,7 +521,7 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, 1)}
-                        disabled={item.quantity >= (item.stock ?? 99)}
+                        disabled={item.stock <= 0 || item.quantity >= (item.stock ?? 99)}
                       >
                         +
                       </button>
@@ -517,6 +529,9 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
                         <MdClose />
                       </button>
                     </div>
+                    {item.stock <= 0 && (
+                      <p style={{ color: '#f85149', fontSize: 12, marginTop: 6 }}>Out of stock - remove this item to continue</p>
+                    )}
                     <p>₹{(item.price * item.quantity).toLocaleString('en-IN')}</p>
                   </div>
                 </div>
@@ -651,11 +666,17 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
               </button>
             )}
             {step < 4 ? (
-              <button type="button" className="btn-primary" style={{ width: 'auto' }} onClick={goNext}>
+              <button
+                type="button"
+                className="btn-primary"
+                style={{ width: 'auto' }}
+                onClick={goNext}
+                disabled={step === 1 && hasOutOfStockItems}
+              >
                 Continue
               </button>
             ) : (
-              <button type="button" className="btn-primary" style={{ width: 'auto' }} onClick={handlePlaceOrder} disabled={processing}>
+              <button type="button" className="btn-primary" style={{ width: 'auto' }} onClick={handlePlaceOrder} disabled={processing || hasOutOfStockItems}>
                 {processing ? 'Placing Order...' : 'Place Order'}
               </button>
             )}

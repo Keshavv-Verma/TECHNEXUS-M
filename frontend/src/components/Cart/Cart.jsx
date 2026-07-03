@@ -150,10 +150,18 @@ const Cart = ({ setShowCart }) => {
                   </div>
                   <div className="item-details">
                     <span className="name">{item.name}</span>
+                    {item.stock <= 0 && <span className="item-stock-status out-of-stock">Out of stock</span>}
                     <div className="quantity-buttons">
                       <span onClick={() => updateQuantity(item.id, -1)}>-</span>
                       <span>{item.quantity}</span>
-                      <span onClick={() => updateQuantity(item.id, 1)}>+</span>
+                      <span
+                        className={item.stock <= 0 || item.quantity >= (item.stock ?? 0) ? 'disabled' : ''}
+                        onClick={() => {
+                          if (item.stock <= 0 || item.quantity >= (item.stock ?? 0)) return;
+                          updateQuantity(item.id, 1);
+                        }}
+                      >+
+                      </span>
                     </div>
                     <div className="text">
                       <span>{item.quantity}</span>

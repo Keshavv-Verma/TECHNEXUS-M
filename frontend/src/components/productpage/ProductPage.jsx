@@ -15,6 +15,8 @@ const ProductPage = () => {
   const [error, setError] = useState(null);
   const [isAdded, setIsAdded] = useState(false);
 
+  const isOutOfStock = product?.stock <= 0;
+
   useEffect(() => {
     const fetchProduct = async () => {
       try {
@@ -33,6 +35,10 @@ const ProductPage = () => {
 
   const handleAddToCart = async () => {
     if (!product) return;
+    if (isOutOfStock) {
+      alert('Product is out of stock');
+      return;
+    }
     const pid = String(getProductId(product) || id);
     const normalizedProduct = { ...product, id: pid };
 
@@ -54,6 +60,10 @@ const ProductPage = () => {
 
   const handleBuyNow = async () => {
     if (!product) return;
+    if (isOutOfStock) {
+      alert('Product is out of stock');
+      return;
+    }
     const pid = String(getProductId(product) || id);
     const normalizedProduct = { ...product, id: pid };
 
@@ -170,21 +180,29 @@ const ProductPage = () => {
             </div>
           </div>
 
+          <div className="stock-status-row">
+            <span className={`stock-status ${isOutOfStock ? 'out-of-stock' : 'in-stock'}`}>
+              {isOutOfStock ? 'Out of stock' : `In stock: ${product.stock}`}
+            </span>
+          </div>
+
           <div className="action-buttons">
             <button
               className={`add-to-cart-btn ${isAdded ? 'added' : ''}`}
               onClick={handleAddToCart}
+              disabled={isOutOfStock}
               aria-label={isAdded ? "Added to cart successfully" : "Add curated device to shopping cart"}
             >
               <FiShoppingCart aria-hidden="true" />
-              {isAdded ? 'Added to Cart' : 'Add to Cart'}
+              {isAdded ? 'Added to Cart' : isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
             </button>
             <button 
               className="buy-now-btn" 
               onClick={handleBuyNow}
+              disabled={isOutOfStock}
               aria-label="Buy curated device now"
             >
-              Buy Now
+              {isOutOfStock ? 'Out of Stock' : 'Buy Now'}
             </button>
           </div>
         </div>
