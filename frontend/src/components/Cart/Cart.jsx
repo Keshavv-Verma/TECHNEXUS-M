@@ -20,7 +20,6 @@ const Cart = ({ setShowCart }) => {
     const fetchCart = async () => {
       if (!isLoggedIn()) {
         setCartItems(loadCart());
-        setLoadingCart(false);
         return;
       }
 
