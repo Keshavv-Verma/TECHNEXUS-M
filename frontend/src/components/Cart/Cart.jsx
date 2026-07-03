@@ -3,29 +3,60 @@ import { MdClose } from 'react-icons/md';
 import { BsCartX } from 'react-icons/bs';
 import { Link } from 'react-router-dom';
 import CheckoutFlow from '../Checkout/CheckoutFlow';
+import { getCartItems, removeCartItem, updateCartItem } from '../../services/cartService';
+import { isLoggedIn } from '../../utils/authUtils';
 import { loadCart, saveCart } from '../../utils/cartUtils';
 import './Cart.css';
 
 const Cart = ({ setShowCart }) => {
   const isPage = !setShowCart;
-  const [cartItems, setCartItems] = useState(loadCart);
+  const [cartItems, setCartItems] = useState([]);
+  const [loadingCart, setLoadingCart] = useState(true);
 
   const loadCartState = useCallback(() => {
     setCartItems(loadCart());
   }, []);
 
   useEffect(() => {
+    const fetchCart = async () => {
+      if (!isLoggedIn()) {
+        setCartItems(loadCart());
+        setLoadingCart(false);
+        return;
+      }
+
+      try {
+        const items = await getCartItems();
+        setCartItems(items);
+        saveCart(items);
+      } catch (error) {
+        console.error('Failed to load cart from server:', error.message || error);
+        setCartItems(loadCart());
+      } finally {
+        setLoadingCart(false);
+      }
+    };
+
+    fetchCart();
     window.addEventListener('cartUpdated', loadCartState);
     return () => window.removeEventListener('cartUpdated', loadCartState);
   }, [loadCartState]);
 
-  const removeFromCart = (productId) => {
+  const removeFromCart = async (productId) => {
     const updated = cartItems.filter((item) => item.id !== productId);
+    if (isLoggedIn()) {
+      try {
+        const item = cartItems.find((item) => item.id === productId);
+        await removeCartItem(item?.productId || productId);
+      } catch (error) {
+        console.error('Failed to remove cart item from server:', error.message || error);
+      }
+    }
     saveCart(updated);
     setCartItems(updated);
   };
 
-  const updateQuantity = (productId, change) => {
+  const updateQuantity = async (productId, change) => {
     const updated = cartItems
       .map((item) => {
         if (item.id !== productId) return item;
@@ -35,6 +66,16 @@ const Cart = ({ setShowCart }) => {
         return { ...item, quantity: newQty };
       })
       .filter(Boolean);
+
+    const changedItem = updated.find((item) => item.id === productId);
+    if (isLoggedIn() && changedItem) {
+      try {
+        await updateCartItem(changedItem.productId || productId, changedItem.quantity);
+      } catch (error) {
+        console.error('Failed to update cart item on server:', error.message || error);
+      }
+    }
+
     saveCart(updated);
     setCartItems(updated);
   };

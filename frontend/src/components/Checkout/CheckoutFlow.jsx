@@ -19,6 +19,7 @@ import {
   setDefaultAddress,
   placeOrder,
 } from '../../services/checkoutService';
+import { getCartItems, updateCartItem, removeCartItem } from '../../services/cartService';
 import {
   initiateStripePayment,
   verifyStripeCheckout,
@@ -38,9 +39,10 @@ import './Checkout.css';
 const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
-  const [cartItems, setCartItems] = useState(loadCart);
+  const [cartItems, setCartItems] = useState([]);
   const [config, setConfig] = useState(null);
   const [pricing, setPricing] = useState(null);
+  const [loadingCart, setLoadingCart] = useState(true);
   const [pricingLoading, setPricingLoading] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [addresses, setAddresses] = useState([]);
@@ -78,7 +80,7 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
     setPricingLoading(true);
     try {
       const data = await previewCheckout({
-        items: cartItems.map((i) => ({ productId: i.id, quantity: i.quantity })),
+        items: cartItems.map((i) => ({ productId: i.productId || i.id, quantity: i.quantity })),
         couponCode: appliedCoupon?.code || '',
       });
       setPricing(data.pricing);
@@ -99,6 +101,36 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
       setSessionExpired(true);
       return;
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      if (!isLoggedIn()) {
+        const items = loadCart();
+        setCartItems(items);
+        setLoadingCart(false);
+        return;
+      }
+
+      try {
+        const items = await getCartItems();
+        setCartItems(items);
+        saveCart(items);
+      } catch (error) {
+        console.error('Failed to load cart from server:', error.message || error);
+        if (!isLoggedIn()) {
+          const items = loadCart();
+          setCartItems(items);
+        } else {
+          setCartItems([]);
+          saveCart([]);
+        }
+      } finally {
+        setLoadingCart(false);
+      }
+    };
+
+    fetchCart();
   }, []);
 
   useEffect(() => {
@@ -179,8 +211,9 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   }, [completeStripeReturn]);
 
   useEffect(() => {
-    if (isLoggedIn() && cartItems.length) refreshPricing();
-  }, [cartItems, appliedCoupon, refreshPricing]);
+    if (loadingCart || !isLoggedIn() || !cartItems.length) return;
+    refreshPricing();
+  }, [cartItems, appliedCoupon, refreshPricing, loadingCart]);
 
   const loadAddresses = useCallback(async () => {
     if (!isLoggedIn()) return;
@@ -200,7 +233,7 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
     if (step === 2) loadAddresses();
   }, [step, loadAddresses]);
 
-  const updateQuantity = (productId, change) => {
+  const updateQuantity = async (productId, change) => {
     const updated = cartItems
       .map((item) => {
         if (item.id !== productId) return item;
@@ -213,12 +246,31 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
         return { ...item, quantity: newQty };
       })
       .filter(Boolean);
+
+    const changedItem = updated.find((item) => item.id === productId);
+    if (isLoggedIn() && changedItem) {
+      try {
+        await updateCartItem(changedItem.productId || productId, changedItem.quantity);
+      } catch (error) {
+        console.error('Failed to update cart item on server:', error.message || error);
+      }
+    }
+
     saveCart(updated);
     setCartItems(updated);
   };
 
-  const removeItem = (productId) => {
+  const removeItem = async (productId) => {
     const updated = cartItems.filter((i) => i.id !== productId);
+    if (isLoggedIn()) {
+      try {
+        const item = cartItems.find((i) => i.id === productId);
+        await removeCartItem(item?.productId || productId);
+      } catch (error) {
+        console.error('Failed to remove cart item from server:', error.message || error);
+      }
+    }
+
     saveCart(updated);
     setCartItems(updated);
   };
@@ -275,7 +327,7 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   const displayPricing = pricing || (config ? { ...clientPricing(), estimatedDelivery: null } : null);
 
   const placeOrderPayload = (extra = {}) => ({
-    items: cartItems.map((i) => ({ productId: i.id, quantity: i.quantity })),
+    items: cartItems.map((i) => ({ productId: i.productId || i.id, quantity: i.quantity })),
     addressId: selectedAddressId,
     couponCode: appliedCoupon?.code || '',
     paymentMethod: extra.paymentMethod || paymentMethod,

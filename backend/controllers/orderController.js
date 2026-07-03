@@ -66,8 +66,14 @@ const placeOrder = async (req, res, next) => {
 
     for (const item of items) {
       const updated = await Product.findOneAndUpdate(
-        { _id: item.productId, stock: { $gte: item.quantity } },
-        { $inc: { stock: -item.quantity } },
+        {
+          _id: item.productId,
+          stock: { $gte: item.quantity },
+          reservedStock: { $gte: item.quantity },
+        },
+        {
+          $inc: { stock: -item.quantity, reservedStock: -item.quantity },
+        },
         { new: true, session }
       );
       if (!updated) {

@@ -6,9 +6,10 @@ const { calculatePricing } = require('../utils/checkoutUtils');
 const resolveCartItems = async (items) => {
   const resolved = [];
   for (const item of items) {
-    const product = await Product.findById(item.productId);
+    const lookupId = item.productId || item.id;
+    const product = await Product.findById(lookupId);
     if (!product || !product.isActive) {
-      throw Object.assign(new Error(`Product not found: ${item.productId}`), { status: 404 });
+      throw Object.assign(new Error(`Product not found: ${lookupId}`), { status: 404 });
     }
     if (item.quantity > product.stock) {
       throw Object.assign(

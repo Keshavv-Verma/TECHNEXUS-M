@@ -17,11 +17,15 @@ export const normalizeCartItem = (product, quantity = 1) => {
 export const loadCart = () => {
   try {
     const raw = JSON.parse(localStorage.getItem('cart')) || [];
-    return raw.map((item) => ({
-      ...item,
-      id: String(item.id || item._id),
-      stock: item.stock ?? 99,
-    }));
+    return raw.map((item) => {
+      const productId = item.productId || item.id || item._id;
+      return {
+        ...item,
+        id: String(productId),
+        productId: String(productId),
+        stock: item.stock ?? 99,
+      };
+    });
   } catch {
     return [];
   }
