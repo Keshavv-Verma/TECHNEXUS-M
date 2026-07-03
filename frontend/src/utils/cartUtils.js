@@ -31,9 +31,19 @@ export const loadCart = () => {
   }
 };
 
-export const saveCart = (items) => {
+let cartUpdateTimer = null;
+
+export const saveCart = (items, { silent = false } = {}) => {
   localStorage.setItem('cart', JSON.stringify(items));
-  window.dispatchEvent(new Event('cartUpdated'));
+  if (!silent) {
+    if (cartUpdateTimer) {
+      clearTimeout(cartUpdateTimer);
+    }
+    cartUpdateTimer = window.setTimeout(() => {
+      window.dispatchEvent(new Event('cartUpdated'));
+      cartUpdateTimer = null;
+    }, 100);
+  }
 };
 
 export const getCartCount = (items) =>

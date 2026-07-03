@@ -109,7 +109,9 @@ const addCartItem = async (req, res, next) => {
     await session.commitTransaction();
     res.status(201).json(normalizeCartItem(populated));
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     logger.error('Error saving cart item', error.message);
     next(error);
   } finally {
@@ -158,7 +160,9 @@ const updateCartItem = async (req, res, next) => {
     await session.commitTransaction();
     res.json(normalizeCartItem(populated));
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     logger.error('Error updating cart item', error.message);
     next(error);
   } finally {
@@ -187,7 +191,9 @@ const removeCartItem = async (req, res, next) => {
     await session.commitTransaction();
     res.json({ success: true });
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     logger.error('Error removing cart item', error.message);
     next(error);
   } finally {

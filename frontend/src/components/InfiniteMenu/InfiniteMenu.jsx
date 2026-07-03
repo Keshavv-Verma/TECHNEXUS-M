@@ -779,55 +779,51 @@ class InfiniteGridMenu {
     ctx.fillStyle = '#050505';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    Promise.all(
-      this.items.map(
-        item =>
-          new Promise(resolve => {
-            const img = new Image();
-            img.crossOrigin = 'anonymous';
-            img.onload = () => resolve(img);
-            img.onerror = () => {
-              const placeholder = document.createElement('canvas');
-              placeholder.width = cellSize;
-              placeholder.height = cellSize;
-              const pCtx = placeholder.getContext('2d');
-              pCtx.fillStyle = '#111';
-              pCtx.fillRect(0, 0, cellSize, cellSize);
-              pCtx.fillStyle = '#fff';
-              pCtx.font = '30px sans-serif';
-              pCtx.textAlign = 'center';
-              pCtx.textBaseline = 'middle';
-              pCtx.fillText(item.title || 'Product', cellSize / 2, cellSize / 2);
-              const fallbackImg = new Image();
-              fallbackImg.src = placeholder.toDataURL();
-              fallbackImg.onload = () => resolve(fallbackImg);
-            };
-            img.src = item.image;
-          })
-      )
-    ).then(images => {
+    const createPlaceholderImage = (title) => {
+      const placeholder = document.createElement('canvas');
+      placeholder.width = cellSize;
+      placeholder.height = cellSize;
+      const pCtx = placeholder.getContext('2d');
+      pCtx.fillStyle = '#111';
+      pCtx.fillRect(0, 0, cellSize, cellSize);
+      pCtx.fillStyle = '#fff';
+      pCtx.font = '30px sans-serif';
+      pCtx.textAlign = 'center';
+      pCtx.textBaseline = 'middle';
+      pCtx.fillText(title || 'Product', cellSize / 2, cellSize / 2);
+      const fallbackImg = new Image();
+      fallbackImg.src = placeholder.toDataURL();
+      return new Promise((resolve) => {
+        fallbackImg.onload = () => resolve(fallbackImg);
+      });
+    };
+
+    const loadSafeImage = (item) =>
+      new Promise((resolve) => {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+          try {
+            const testCanvas = document.createElement('canvas');
+            testCanvas.width = 1;
+            testCanvas.height = 1;
+            const testCtx = testCanvas.getContext('2d');
+            testCtx.drawImage(img, 0, 0, 1, 1);
+            testCtx.getImageData(0, 0, 1, 1);
+            resolve(img);
+          } catch (err) {
+            resolve(createPlaceholderImage(item.title));
+          }
+        };
+        img.onerror = () => resolve(createPlaceholderImage(item.title));
+        img.src = item.image;
+      });
+
+    Promise.all(this.items.map((item) => loadSafeImage(item))).then((images) => {
       images.forEach((img, i) => {
         const x = (i % this.atlasSize) * cellSize;
         const y = Math.floor(i / this.atlasSize) * cellSize;
-        
-        // Dynamically sample background color from the top-left corner
-        let bgColor = '#050505';
-        try {
-          const tempCanvas = document.createElement('canvas');
-          tempCanvas.width = 1;
-          tempCanvas.height = 1;
-          const tempCtx = tempCanvas.getContext('2d');
-          tempCtx.drawImage(img, 0, 0, 1, 1, 0, 0, 1, 1);
-          const pixel = tempCtx.getImageData(0, 0, 1, 1).data;
-          // Only use sampled color if it is not transparent
-          if (pixel[3] > 10) {
-            bgColor = `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
-          }
-        } catch (e) {
-          // If image does not allow CORS, fail gracefully and use default dark background
-        }
-
-        ctx.fillStyle = bgColor;
+        ctx.fillStyle = '#050505';
         ctx.fillRect(x, y, cellSize, cellSize);
 
         // Fit image inside cell preserving aspect ratio, scaled to 82% to prevent clipping

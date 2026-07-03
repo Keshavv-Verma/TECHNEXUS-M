@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiShare2, FiCheckCircle, FiTruck } from 'react-icons/fi';
 import { loadCart, saveCart, normalizeCartItem, getProductId } from '../../utils/cartUtils';
 import { joinApiUrl } from '../../services/api';
-import { addCartItem } from '../../services/cartService';
+import { addCartItem, getCartItems } from '../../services/cartService';
 import { isLoggedIn } from '../../utils/authUtils';
 import './productpage.css';
 
@@ -32,30 +32,35 @@ const ProductPage = () => {
   }, [id]);
 
   const handleAddToCart = async () => {
-    const pid = String(getProductId(product));
+    if (!product) return;
+    const pid = String(getProductId(product) || id);
+    const normalizedProduct = { ...product, id: pid };
+
     if (isLoggedIn()) {
       try {
         await addCartItem(pid, 1);
+        const items = await getCartItems();
+        saveCart(items);
       } catch (error) {
         console.error('Backend cart add failed:', error.message || error);
       }
-    }
-
-    const cart = loadCart();
-    const existingItem = cart.find((item) => item.id === pid);
-
-    if (existingItem) {
-      const stock = existingItem.stock ?? product.stock ?? 99;
-      if (existingItem.quantity >= stock) {
-        alert(`Only ${stock} units available`);
-        return;
-      }
-      const updatedCart = cart.map((item) =>
-        item.id === pid ? { ...item, quantity: item.quantity + 1 } : item
-      );
-      saveCart(updatedCart);
     } else {
-      saveCart([...cart, normalizeCartItem(product, 1)]);
+      const cart = loadCart();
+      const existingItem = cart.find((item) => item.id === pid);
+
+      if (existingItem) {
+        const stock = existingItem.stock ?? product.stock ?? 99;
+        if (existingItem.quantity >= stock) {
+          alert(`Only ${stock} units available`);
+          return;
+        }
+        const updatedCart = cart.map((item) =>
+          item.id === pid ? { ...item, quantity: item.quantity + 1 } : item
+        );
+        saveCart(updatedCart);
+      } else {
+        saveCart([...cart, normalizeCartItem(normalizedProduct, 1)]);
+      }
     }
 
     setIsAdded(true);
@@ -64,17 +69,21 @@ const ProductPage = () => {
 
   const handleBuyNow = async () => {
     if (!product) return;
-    const pid = String(getProductId(product));
+    const pid = String(getProductId(product) || id);
+    const normalizedProduct = { ...product, id: pid };
 
     if (isLoggedIn()) {
       try {
         await addCartItem(pid, 1);
+        const items = await getCartItems();
+        saveCart(items);
       } catch (error) {
         console.error('Backend cart add failed:', error.message || error);
       }
+    } else {
+      saveCart([normalizeCartItem(normalizedProduct, 1)]);
     }
 
-    saveCart([normalizeCartItem(product, 1)]);
     navigate('/cart');
   };
 

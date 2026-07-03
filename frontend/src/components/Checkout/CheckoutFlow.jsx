@@ -33,6 +33,7 @@ import {
   redirectToLogin,
   isTokenExpired,
   getToken,
+  AUTH_CHANGED_EVENT,
 } from '../../utils/authUtils';
 import './Checkout.css';
 
@@ -54,6 +55,8 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   const [toast, setToast] = useState(null);
   const [sessionExpired, setSessionExpired] = useState(false);
   const stripeReturnHandled = useRef(false);
+  const updateTimerRef = useRef({});
+  const removeTimerRef = useRef({});
 
   const showToast = (message, type = 'success') => {
     setToast({ message, type });
@@ -118,19 +121,17 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
         saveCart(items);
       } catch (error) {
         console.error('Failed to load cart from server:', error.message || error);
-        if (!isLoggedIn()) {
-          const items = loadCart();
-          setCartItems(items);
-        } else {
-          setCartItems([]);
-          saveCart([]);
-        }
+        setCartItems([]);
+        saveCart([]);
       } finally {
         setLoadingCart(false);
       }
     };
 
     fetchCart();
+    const onAuthChange = () => fetchCart();
+    window.addEventListener(AUTH_CHANGED_EVENT, onAuthChange);
+    return () => window.removeEventListener(AUTH_CHANGED_EVENT, onAuthChange);
   }, []);
 
   useEffect(() => {
@@ -231,6 +232,10 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
 
   useEffect(() => {
     if (step === 2) loadAddresses();
+    return () => {
+      Object.values(updateTimerRef.current).forEach(clearTimeout);
+      Object.values(removeTimerRef.current).forEach(clearTimeout);
+    };
   }, [step, loadAddresses]);
 
   const updateQuantity = async (productId, change) => {
@@ -249,11 +254,16 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
 
     const changedItem = updated.find((item) => item.id === productId);
     if (isLoggedIn() && changedItem) {
-      try {
-        await updateCartItem(changedItem.productId || productId, changedItem.quantity);
-      } catch (error) {
-        console.error('Failed to update cart item on server:', error.message || error);
-      }
+      const resolvedProductId = changedItem.productId || productId;
+      clearTimeout(updateTimerRef.current[resolvedProductId]);
+      updateTimerRef.current[resolvedProductId] = window.setTimeout(async () => {
+        try {
+          await updateCartItem(resolvedProductId, changedItem.quantity);
+        } catch (error) {
+          console.error('Failed to update cart item on server:', error.message || error);
+        }
+        delete updateTimerRef.current[resolvedProductId];
+      }, 250);
     }
 
     saveCart(updated);
@@ -263,12 +273,17 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   const removeItem = async (productId) => {
     const updated = cartItems.filter((i) => i.id !== productId);
     if (isLoggedIn()) {
-      try {
-        const item = cartItems.find((i) => i.id === productId);
-        await removeCartItem(item?.productId || productId);
-      } catch (error) {
-        console.error('Failed to remove cart item from server:', error.message || error);
-      }
+      const item = cartItems.find((i) => i.id === productId);
+      const resolvedProductId = item?.productId || productId;
+      clearTimeout(removeTimerRef.current[resolvedProductId]);
+      removeTimerRef.current[resolvedProductId] = window.setTimeout(async () => {
+        try {
+          await removeCartItem(resolvedProductId);
+        } catch (error) {
+          console.error('Failed to remove cart item from server:', error.message || error);
+        }
+        delete removeTimerRef.current[resolvedProductId];
+      }, 250);
     }
 
     saveCart(updated);

@@ -17,6 +17,7 @@ router.get('/products/category/:category', getProductsByCategory);
 router.get('/products/:id', getProductById);
 router.get('/categories', getCategories);
 router.get('/api/products', getAllProducts);
+router.get('/api/products/:id', getProductById);
 router.get('/api/products/category/:category', getProductsByCategory);
 
 // Admin-only write routes

@@ -4,6 +4,8 @@ import axios from "axios";
 import { clearAuth, getToken, isTokenExpired, persistAuth } from "../utils/authUtils";
 import { joinApiUrl } from "../services/api";
 import { addCartItem } from "../services/cartService";
+import { saveCart } from "../utils/cartUtils";
+import { getProductId } from "../utils/cartUtils";
 
 export const Context = createContext();
 
@@ -159,9 +161,12 @@ const AppContext = ({ children }) => {
           items = [...items, product];
         }
         setCartItems(items);
+        saveCart(items);
         return;
       } catch (error) {
         console.error('Failed to persist cart item to backend:', error.message || error);
+        alert('Unable to add item to cart. Please try again.');
+        return;
       }
     }
 
@@ -172,6 +177,7 @@ const AppContext = ({ children }) => {
       items = [...items, product];
     }
     setCartItems(items);
+    saveCart(items);
   };
   const handleRemoveFromCart = (product) => {
     // Only allow admins to remove items
@@ -183,6 +189,7 @@ const AppContext = ({ children }) => {
     let items = [...cartItems];
     items = items?.filter((p) => p.id !== product?.id);
     setCartItems(items);
+    saveCart(items);
   };
   const handleCartProductQuantity = (type, product) => {
     let items = [...cartItems];
@@ -194,6 +201,7 @@ const AppContext = ({ children }) => {
       items[index].attributes.quantity -= 1;
     }
     setCartItems(items);
+    saveCart(items);
   };
 
   return (

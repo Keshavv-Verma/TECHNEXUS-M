@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import Search from "../Search/Search";
 import { NavLink, useNavigate, Link, useLocation } from "react-router-dom";
 import { TbSearch } from "react-icons/tb";
@@ -7,6 +7,8 @@ import { FiMenu } from "react-icons/fi";
 import { BsCart } from "react-icons/bs";
 import { FiUser, FiLogOut, FiPackage } from "react-icons/fi";
 import "./Navbar.css";
+import { getCartItems } from "../../services/cartService";
+import { saveCart } from "../../utils/cartUtils";
 import {
   clearAuth,
   isLoggedIn,
@@ -34,9 +36,33 @@ const Navbar = () => {
   const [color, setColor] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const isMountedRef = useRef(true);
+  const cartLoadingRef = useRef(false);
 
-  const updateCartCount = useCallback(() => {
-    const cart = JSON.parse(localStorage.getItem("cart")) || [];
+  const updateCartCount = useCallback(async () => {
+    if (cartLoadingRef.current) {
+      return;
+    }
+
+    if (isLoggedIn()) {
+      cartLoadingRef.current = true;
+      try {
+        const items = await getCartItems();
+        if (!isMountedRef.current) return;
+        saveCart(items, { silent: true });
+        const count = items.reduce((total, item) => total + (item.quantity || 0), 0);
+        setCartCount(count);
+        return;
+      } catch (error) {
+        console.error('Failed to load cart items for badge count:', error.message || error);
+        setCartCount(0);
+        return;
+      } finally {
+        cartLoadingRef.current = false;
+      }
+    }
+
+    const cart = JSON.parse(localStorage.getItem('cart')) || [];
     const count = cart.reduce((total, item) => total + (item.quantity || 0), 0);
     setCartCount(count);
   }, []);
@@ -55,15 +81,21 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     updateCartCount();
     checkAuthStatus();
 
     window.addEventListener("cartUpdated", updateCartCount);
+    window.addEventListener("storage", updateCartCount);
+    window.addEventListener(AUTH_CHANGED_EVENT, updateCartCount);
     window.addEventListener("storage", checkAuthStatus);
     window.addEventListener(AUTH_CHANGED_EVENT, checkAuthStatus);
 
     return () => {
+      isMountedRef.current = false;
       window.removeEventListener("cartUpdated", updateCartCount);
+      window.removeEventListener("storage", updateCartCount);
+      window.removeEventListener(AUTH_CHANGED_EVENT, updateCartCount);
       window.removeEventListener("storage", checkAuthStatus);
       window.removeEventListener(AUTH_CHANGED_EVENT, checkAuthStatus);
     };

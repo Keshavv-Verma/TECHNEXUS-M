@@ -15,6 +15,7 @@ export const persistAuth = ({
   if (!token) {
     throw new Error('No access token to store');
   }
+  localStorage.removeItem('cart');
   localStorage.setItem('token', token);
   if (refreshToken) {
     localStorage.setItem('refreshToken', refreshToken);
@@ -75,6 +76,7 @@ export const isLoggedIn = () => {
 
 export const clearAuth = () => {
   AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
+  localStorage.removeItem('cart');
   notifyAuthChange();
 };
 
