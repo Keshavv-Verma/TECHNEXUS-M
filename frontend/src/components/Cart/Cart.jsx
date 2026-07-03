@@ -53,8 +53,8 @@ const Cart = ({ setShowCart }) => {
     window.addEventListener('cartUpdated', loadCartState);
     window.addEventListener(AUTH_CHANGED_EVENT, loadCartState);
     return () => {
-      const updateTimers = { ...updateTimerRef.current };
-      const removeTimers = { ...removeTimerRef.current };
+      const updateTimers = updateTimerRef.current;
+      const removeTimers = removeTimerRef.current;
       window.removeEventListener('cartUpdated', loadCartState);
       window.removeEventListener(AUTH_CHANGED_EVENT, loadCartState);
       Object.values(updateTimers).forEach(clearTimeout);

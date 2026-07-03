@@ -5,7 +5,6 @@ import { clearAuth, getToken, isTokenExpired, persistAuth } from "../utils/authU
 import { joinApiUrl } from "../services/api";
 import { addCartItem } from "../services/cartService";
 import { saveCart } from "../utils/cartUtils";
-import { getProductId } from "../utils/cartUtils";
 
 export const Context = createContext();
 

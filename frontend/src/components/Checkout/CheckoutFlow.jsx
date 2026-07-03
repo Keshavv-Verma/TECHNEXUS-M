@@ -233,8 +233,8 @@ const CheckoutFlow = ({ setShowCart, isPanel = false }) => {
   useEffect(() => {
     if (step === 2) loadAddresses();
     return () => {
-      const updateTimers = { ...updateTimerRef.current };
-      const removeTimers = { ...removeTimerRef.current };
+      const updateTimers = updateTimerRef.current;
+      const removeTimers = removeTimerRef.current;
       Object.values(updateTimers).forEach(clearTimeout);
       Object.values(removeTimers).forEach(clearTimeout);
     };
