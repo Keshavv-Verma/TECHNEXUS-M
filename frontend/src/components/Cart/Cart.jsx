@@ -11,7 +11,6 @@ import './Cart.css';
 const Cart = ({ setShowCart }) => {
   const isPage = !setShowCart;
   const [cartItems, setCartItems] = useState([]);
-  const [loadingCart, setLoadingCart] = useState(true);
 
   const loadCartState = useCallback(() => {
     setCartItems(loadCart());
@@ -32,8 +31,6 @@ const Cart = ({ setShowCart }) => {
       } catch (error) {
         console.error('Failed to load cart from server:', error.message || error);
         setCartItems(loadCart());
-      } finally {
-        setLoadingCart(false);
       }
     };
 
