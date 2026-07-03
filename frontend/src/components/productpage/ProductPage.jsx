@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiHeart, FiShare2, FiCheckCircle, FiTruck } from 'react-icons/fi';
-import { loadCart, saveCart, normalizeCartItem, getProductId } from '../../utils/cartUtils';
+import { saveCart, normalizeCartItem, getProductId } from '../../utils/cartUtils';
 import { joinApiUrl } from '../../services/api';
 import { addCartItem, getCartItems } from '../../services/cartService';
 import { isLoggedIn, redirectToLogin } from '../../utils/authUtils';
@@ -40,7 +40,6 @@ const ProductPage = () => {
       return;
     }
     const pid = String(getProductId(product) || id);
-    const normalizedProduct = { ...product, id: pid };
 
     if (!isLoggedIn()) {
       redirectToLogin(navigate, `/product/${pid}`);
