@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
-const { Order, Product, Address, Coupon } = require('../models');
+const { Order, Product, Address, Coupon, CartItem } = require('../models');
 const { placeOrderSchema } = require('../utils/validationSchemas');
 const {
   calculatePricing,
   formatAddress,
   generateOrderNumber,
 } = require('../utils/checkoutUtils');
-const { resolveCartItems } = require('./checkoutController');
+const checkoutController = require('./checkoutController');
 
 const placeOrder = async (req, res, next) => {
   const session = await mongoose.startSession();
@@ -29,7 +29,7 @@ const placeOrder = async (req, res, next) => {
       return res.status(404).json({ error: 'Delivery address not found' });
     }
 
-    const items = await resolveCartItems(value.items);
+    const items = await checkoutController.resolveCartItems(value.items);
     let coupon = null;
     if (value.couponCode) {
       coupon = await Coupon.findOne({
@@ -129,6 +129,8 @@ const placeOrder = async (req, res, next) => {
       ],
       { session }
     );
+
+    await CartItem.deleteMany({ userId: req.user.userId }).session(session);
 
     await session.commitTransaction();
 
