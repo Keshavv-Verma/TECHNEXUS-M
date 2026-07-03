@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MdClose } from 'react-icons/md';
 import { BsCartX } from 'react-icons/bs';
 import { Link } from 'react-router-dom';
@@ -53,10 +53,12 @@ const Cart = ({ setShowCart }) => {
     window.addEventListener('cartUpdated', loadCartState);
     window.addEventListener(AUTH_CHANGED_EVENT, loadCartState);
     return () => {
+      const updateTimers = { ...updateTimerRef.current };
+      const removeTimers = { ...removeTimerRef.current };
       window.removeEventListener('cartUpdated', loadCartState);
       window.removeEventListener(AUTH_CHANGED_EVENT, loadCartState);
-      Object.values(updateTimerRef.current).forEach(clearTimeout);
-      Object.values(removeTimerRef.current).forEach(clearTimeout);
+      Object.values(updateTimers).forEach(clearTimeout);
+      Object.values(removeTimers).forEach(clearTimeout);
     };
   }, [loadCartState]);
 
