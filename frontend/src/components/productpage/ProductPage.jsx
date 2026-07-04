@@ -5,6 +5,7 @@ import { saveCart, normalizeCartItem, getProductId } from '../../utils/cartUtils
 import { joinApiUrl } from '../../services/api';
 import { addCartItem, getCartItems } from '../../services/cartService';
 import { isLoggedIn, redirectToLogin } from '../../utils/authUtils';
+import Notification from '../Notification/Notification';
 import './productpage.css';
 
 const ProductPage = () => {
@@ -14,6 +15,7 @@ const ProductPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isAdded, setIsAdded] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
 
   const isOutOfStock = product?.stock <= 0;
 
@@ -51,7 +53,9 @@ const ProductPage = () => {
       const items = await getCartItems();
       saveCart(items);
       setIsAdded(true);
+      setShowNotification(true);
       setTimeout(() => setIsAdded(false), 2000);
+      setTimeout(() => setShowNotification(false), 3000);
     } catch (error) {
       console.error('Backend cart add failed:', error.message || error);
     }
@@ -206,6 +210,12 @@ const ProductPage = () => {
           </div>
         </div>
       </div>
+      {showNotification && (
+        <Notification
+          message="Product added to cart!"
+          onClose={() => setShowNotification(false)}
+        />
+      )}
     </div>
   );
 };
