@@ -14,4 +14,13 @@ const getStripe = () => {
   return stripeClient;
 };
 
-module.exports = { getStripe };
+const refundPaymentIntent = async (paymentIntentId, opts = {}) => {
+  const stripe = getStripe();
+  if (!stripe) {
+    throw new Error('Stripe not configured');
+  }
+  // Stripe refunds can be created by payment_intent
+  return stripe.refunds.create({ payment_intent: paymentIntentId, ...opts });
+};
+
+module.exports = { getStripe, refundPaymentIntent };

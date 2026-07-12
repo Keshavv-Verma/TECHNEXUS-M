@@ -7,6 +7,9 @@ const {
   generateOrderNumber,
 } = require('../utils/checkoutUtils');
 const checkoutController = require('./checkoutController');
+const logger = require('../utils/logger');
+const config = require('../config');
+const { refundPaymentIntent } = require('../services/stripeService');
 
 const placeOrder = async (req, res, next) => {
   const session = await mongoose.startSession();
@@ -138,6 +141,26 @@ const placeOrder = async (req, res, next) => {
   } catch (err) {
     await session.abortTransaction();
     if (err.status) return res.status(err.status).json({ error: err.message });
+
+    // If a Stripe payment was already made, attempt to refund it and inform the user
+    const paymentIntentId = (typeof value !== 'undefined' && value?.stripePaymentIntentId) || req.body?.stripePaymentIntentId || null;
+    if (paymentIntentId) {
+      try {
+        await refundPaymentIntent(paymentIntentId);
+        logger.info('Issued refund for Stripe payment after order placement failure', {
+          paymentIntentId,
+          userId: req.user?.userId,
+        });
+      } catch (refundErr) {
+        logger.error('Failed to refund Stripe payment after order placement failure', refundErr?.message || refundErr);
+      }
+
+      return res.status(500).json({
+        error: 'Internal server error. If payment was taken, it will be refunded in 2-3 business days.',
+        ...(config.isDevelopment ? { detail: err.message } : {}),
+      });
+    }
+
     next(err);
   } finally {
     session.endSession();
