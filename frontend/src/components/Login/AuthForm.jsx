@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
-import { clearAuth, persistAuth } from '../../utils/authUtils';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { clearAuth, persistAuth, isLoggedIn } from '../../utils/authUtils';
 import { joinApiUrl } from '../../services/api';
 import './AuthForm.css';
 import { FiUser, FiMail, FiLock } from 'react-icons/fi';
@@ -13,6 +13,7 @@ const AuthForm = () => {
     name: ''
   });
   const location = useLocation();
+  const navigate = useNavigate();
   const redirectPath = location.state?.redirect || '/';
 
   const clearForm = () => {
@@ -97,58 +98,74 @@ const AuthForm = () => {
           <p>Your Gateway to Premium Tech</p>
         </div>
         <div className="auth-right-panel">
-          <form onSubmit={handleSubmit} className="auth-form">
-            <h2>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
-            
-            {!isLogin && (
+          {isLoggedIn() ? (
+            <div className="auth-form">
+              <h2>Already Logged In</h2>
+              <p style={{ textAlign: 'center', marginBottom: '20px' }}>
+                You are already logged in. No need to sign in again.
+              </p>
+              <button 
+                type="button" 
+                className="auth-button"
+                onClick={() => navigate('/')}
+              >
+                Go to Home
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="auth-form">
+              <h2>{isLogin ? 'Welcome Back' : 'Create Account'}</h2>
+              
+              {!isLogin && (
+                <div className="form-group">
+                  <FiUser className="input-icon" />
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Full Name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required={!isLogin}
+                  />
+                </div>
+              )}
+              
               <div className="form-group">
-                <FiUser className="input-icon" />
+                <FiMail className="input-icon" />
                 <input
-                  type="text"
-                  name="name"
-                  placeholder="Full Name"
-                  value={formData.name}
+                  type="email"
+                  name="email"
+                  placeholder="Email Address"
+                  value={formData.email}
                   onChange={handleChange}
-                  required={!isLogin}
+                  required
                 />
               </div>
-            )}
-            
-            <div className="form-group">
-              <FiMail className="input-icon" />
-              <input
-                type="email"
-                name="email"
-                placeholder="Email Address"
-                value={formData.email}
-                onChange={handleChange}
-                required
-              />
-            </div>
-            
-            <div className="form-group">
-              <FiLock className="input-icon" />
-              <input
-                type="password"
-                name="password"
-                placeholder={isLogin ? 'Password' : 'Password (min. 12 characters)'}
-                value={formData.password}
-                onChange={handleChange}
-                minLength={isLogin ? undefined : 12}
-                required
-              />
-            </div>
-            
-            <button type="submit" className="auth-button">
-              {isLogin ? 'Login' : 'Sign Up'}
-            </button>
-            
-            <p className="auth-switch" onClick={() => setIsLogin(!isLogin)}>
-              {isLogin 
-                ? "Don't have an account? Sign Up" 
-                : "Already have an account? Login"}
-            </p>
-          </form>
+              
+              <div className="form-group">
+                <FiLock className="input-icon" />
+                <input
+                  type="password"
+                  name="password"
+                  placeholder={isLogin ? 'Password' : 'Password (min. 12 characters)'}
+                  value={formData.password}
+                  onChange={handleChange}
+                  minLength={isLogin ? undefined : 12}
+                  required
+                />
+              </div>
+              
+              <button type="submit" className="auth-button">
+                {isLogin ? 'Login' : 'Sign Up'}
+              </button>
+              
+              <p className="auth-switch" onClick={() => setIsLogin(!isLogin)}>
+                {isLogin 
+                  ? "Don't have an account? Sign Up" 
+                  : "Already have an account? Login"}
+              </p>
+            </form>
+          )}
         </div>
       </div>
     </div>

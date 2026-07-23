@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getAdminOrders } from '../../services/checkoutService';
 import { joinApiUrl } from '../../services/api';
+import { isAdmin } from '../../utils/authUtils';
 import SpecificationsManager from './SpecificationsManager';
 import './Dashboard.css';
 
@@ -18,6 +19,7 @@ const Dashboard = () => {
   const [editingId, setEditingId] = useState(null);
   const [editData, setEditData] = useState({});
   const [showSpecsManager, setShowSpecsManager] = useState(false);
+  const [accessDenied, setAccessDenied] = useState(false);
   const [newProduct, setNewProduct] = useState({
     name: '',
     category: '',
@@ -65,6 +67,11 @@ const Dashboard = () => {
     const token = localStorage.getItem('token');
     if (!token) {
       navigate('/login');
+      return;
+    }
+
+    if (!isAdmin()) {
+      setAccessDenied(true);
       return;
     }
 
@@ -133,7 +140,6 @@ const Dashboard = () => {
       }
 
       const savedProduct = await response.json();
-      console.log('Product saved:', savedProduct);
       
       setProducts(prevProducts => [...prevProducts, savedProduct]);
       
@@ -210,7 +216,6 @@ const Dashboard = () => {
       }
 
       const result = await response.json();
-      console.log('Product updated:', result);
 
       setProducts(prevProducts =>
         prevProducts.map(p => p._id === productId ? result.product : p)
@@ -268,45 +273,103 @@ const Dashboard = () => {
 
   return (
     <div className="admin-dashboard-wrapper dark" role="main">
-      <div className="admin-dashboard-header">
-        <h1>Admin Console</h1>
-        <p className="admin-dashboard-subtitle">Manage catalog items and customer orders</p>
-        <div className="admin-tabs" role="tablist" aria-label="Console Management Sections">
+      {accessDenied ? (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '60vh',
+          padding: '40px',
+          textAlign: 'center'
+        }}>
+          <div style={{
+            fontSize: '64px',
+            marginBottom: '20px',
+            color: '#ef4444'
+          }}>
+            ⚠️
+          </div>
+          <h1 style={{
+            fontSize: '28px',
+            fontWeight: '600',
+            color: '#ffffff',
+            marginBottom: '12px'
+          }}>
+            Access Denied
+          </h1>
+          <p style={{
+            fontSize: '16px',
+            color: '#dadada',
+            marginBottom: '24px',
+            maxWidth: '400px'
+          }}>
+            Admin access required. You do not have permission to view this page.
+          </p>
           <button
-            type="button"
-            className={activeTab === 'products' ? 'active-tab' : ''}
-            onClick={() => setActiveTab('products')}
-            role="tab"
-            aria-selected={activeTab === 'products'}
-            aria-controls="products-panel"
-            id="tab-products"
+            onClick={() => navigate('/')}
+            style={{
+              padding: '12px 24px',
+              background: '#ffffff',
+              color: '#000000',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '14px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => {
+              e.target.style.background = '#e5e5e5';
+            }}
+            onMouseOut={(e) => {
+              e.target.style.background = '#ffffff';
+            }}
           >
-            Products
-          </button>
-          <button
-            type="button"
-            className={activeTab === 'specifications' ? 'active-tab' : ''}
-            onClick={() => setActiveTab('specifications')}
-            role="tab"
-            aria-selected={activeTab === 'specifications'}
-            aria-controls="specifications-panel"
-            id="tab-specifications"
-          >
-            Specifications
-          </button>
-          <button
-            type="button"
-            className={activeTab === 'orders' ? 'active-tab' : ''}
-            onClick={() => setActiveTab('orders')}
-            role="tab"
-            aria-selected={activeTab === 'orders'}
-            aria-controls="orders-panel"
-            id="tab-orders"
-          >
-            Orders ({orders.length})
+            Return to Home
           </button>
         </div>
-      </div>
+      ) : (
+        <>
+          <div className="admin-dashboard-header">
+            <h1>Admin Console</h1>
+            <p className="admin-dashboard-subtitle">Manage catalog items and customer orders</p>
+            <div className="admin-tabs" role="tablist" aria-label="Console Management Sections">
+              <button
+                type="button"
+                className={activeTab === 'products' ? 'active-tab' : ''}
+                onClick={() => setActiveTab('products')}
+                role="tab"
+                aria-selected={activeTab === 'products'}
+                aria-controls="products-panel"
+                id="tab-products"
+              >
+                Products
+              </button>
+              <button
+                type="button"
+                className={activeTab === 'specifications' ? 'active-tab' : ''}
+                onClick={() => setActiveTab('specifications')}
+                role="tab"
+                aria-selected={activeTab === 'specifications'}
+                aria-controls="specifications-panel"
+                id="tab-specifications"
+              >
+                Specifications
+              </button>
+              <button
+                type="button"
+                className={activeTab === 'orders' ? 'active-tab' : ''}
+                onClick={() => setActiveTab('orders')}
+                role="tab"
+                aria-selected={activeTab === 'orders'}
+                aria-controls="orders-panel"
+                id="tab-orders"
+              >
+                Orders ({orders.length})
+              </button>
+            </div>
+          </div>
       
       {error && (
         <div className="admin-alert error" role="alert" aria-live="assertive">
@@ -762,6 +825,8 @@ const Dashboard = () => {
             );
           }}
         />
+      )}
+        </>
       )}
     </div>
   );

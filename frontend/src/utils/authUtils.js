@@ -74,6 +74,10 @@ export const isLoggedIn = () => {
   return false;
 };
 
+export const isAdmin = () => {
+  return localStorage.getItem('isAdmin') === 'true';
+};
+
 export const clearAuth = () => {
   AUTH_KEYS.forEach((key) => localStorage.removeItem(key));
   localStorage.removeItem('cart');

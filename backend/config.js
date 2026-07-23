@@ -10,7 +10,7 @@ const corsOrigins = (process.env.CORS_ORIGIN || '')
 
 const allowedOrigins = [
   ...corsOrigins,
-  ...(isProduction ? [] : ['http://localhost:3000', 'http://localhost:3001']),
+  ...(isProduction ? [] : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:5173']),
 ];
 
 const config = {
