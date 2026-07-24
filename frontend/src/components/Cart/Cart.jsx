@@ -41,11 +41,11 @@ const Cart = ({ setShowCart }) => {
       try {
         const items = await getCartItems();
         setCartItems(items);
-        saveCart(items);
+        saveCart(items, { silent: true });
       } catch (error) {
         console.error('Failed to load cart from server:', error.message || error);
         setCartItems([]);
-        saveCart([]);
+        saveCart([], { silent: true });
       }
     };
 
@@ -53,10 +53,8 @@ const Cart = ({ setShowCart }) => {
     const removeTimers = removeTimerRef.current;
 
     fetchCart();
-    window.addEventListener('cartUpdated', loadCartState);
     window.addEventListener(AUTH_CHANGED_EVENT, loadCartState);
     return () => {
-      window.removeEventListener('cartUpdated', loadCartState);
       window.removeEventListener(AUTH_CHANGED_EVENT, loadCartState);
       Object.values(updateTimers).forEach(clearTimeout);
       Object.values(removeTimers).forEach(clearTimeout);
